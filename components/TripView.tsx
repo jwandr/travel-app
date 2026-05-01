@@ -69,15 +69,6 @@ function sortItemsByTime(items: Item[]): Item[] {
   })
 }
 
-function autoAssignTimes(items: Item[]): Item[] {
-  const START_HOUR = 8
-  return items.map((item, i) => ({
-    ...item,
-    start_time: `${String(START_HOUR + i).padStart(2, '0')}:00`,
-    end_time: `${String(START_HOUR + i + 1).padStart(2, '0')}:00`,
-  }))
-}
-
 function getAccomForDate(accom: Accommodation[], date: string): Accommodation | undefined {
   return accom.find((a) => a.check_in <= date && a.check_out > date)
 }
@@ -92,6 +83,155 @@ function nextDate(date: string) {
   const d = new Date(date)
   d.setDate(d.getDate() + 1)
   return d.toISOString().split('T')[0]
+}
+// ─── Scheduling ───────────────────────────────────────────────────────────────
+
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number)
+  return h * 60 + m
+}
+
+function minutesToTime(mins: number): string {
+  const capped = Math.max(0, Math.min(mins, 23 * 60 + 59))
+  const h = Math.floor(capped / 60)
+  const m = capped % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+function getDuration(item: Item): number {
+  if (item.duration_minutes != null && item.duration_minutes > 0) return item.duration_minutes
+  if (item.start_time && item.end_time) {
+    const d = timeToMinutes(item.end_time) - timeToMinutes(item.start_time)
+    return d > 0 ? d : 60
+  }
+  return 60
+}
+
+// Fit a sequence of unlocked items into a window [windowStart, windowEnd].
+// Works backwards from windowEnd if needed to make everything fit.
+function fitItemsInWindow(
+  items: Item[],
+  windowStart: number,
+  windowEnd: number
+): Item[] {
+  const totalDuration = items.reduce((sum, i) => sum + getDuration(i), 0)
+  const result: Item[] = []
+
+  if (totalDuration <= windowEnd - windowStart) {
+    // Enough room — place items sequentially, preserving gaps where possible
+    let cursor = windowStart
+    for (const item of items) {
+      const duration = getDuration(item)
+      // Only preserve gap if item's original time is ahead of cursor and there's room
+      const preferred = item.start_time ? timeToMinutes(item.start_time) : cursor
+      const start = preferred >= cursor ? preferred : cursor
+      const end = start + duration
+      if (end <= windowEnd) {
+        result.push({
+          ...item,
+          start_time: minutesToTime(start),
+          end_time: minutesToTime(end),
+          duration_minutes: duration,
+        })
+        cursor = end
+      } else {
+        // Doesn't fit with gap — pack from cursor
+        result.push({
+          ...item,
+          start_time: minutesToTime(cursor),
+          end_time: minutesToTime(cursor + duration),
+          duration_minutes: duration,
+        })
+        cursor += duration
+      }
+    }
+  } else {
+    // Not enough room — pack backwards from windowEnd
+    let cursor = windowEnd
+    for (const item of [...items].reverse()) {
+      const duration = getDuration(item)
+      result.unshift({
+        ...item,
+        start_time: minutesToTime(cursor - duration),
+        end_time: minutesToTime(cursor),
+        duration_minutes: duration,
+      })
+      cursor -= duration
+    }
+  }
+
+  return result
+}
+
+// Full cascade — respects locked items as immovable walls.
+function cascadeItems(items: Item[]): Item[] {
+  const valid = items.filter(Boolean)
+  const timed = valid.filter((i) => i.start_time || i.duration_minutes)
+  const untimed = valid.filter((i) => !i.start_time && !i.duration_minutes)
+
+  if (timed.length === 0) return [...untimed]
+
+  // Do NOT re-sort — trust the incoming order from the drag
+  const result: Item[] = []
+
+  let i = 0
+  while (i < timed.length) {
+    const item = timed[i]
+
+    if (item.time_locked) {
+      result.push(item)
+      i++
+    } else {
+      // Collect consecutive unlocked items
+      const group: Item[] = []
+      while (i < timed.length && !timed[i].time_locked) {
+        group.push(timed[i])
+        i++
+      }
+
+      const prevLocked = result.filter((x) => x.time_locked).slice(-1)[0]
+      const nextLocked = timed.slice(i).find((x) => x.time_locked)
+
+      const windowStart = prevLocked
+        ? timeToMinutes(prevLocked.end_time!)
+        : group[0].start_time
+          ? timeToMinutes(group[0].start_time)
+          : 8 * 60
+
+      const windowEnd = nextLocked
+        ? timeToMinutes(nextLocked.start_time!)
+        : 24 * 60
+
+      const fitted = fitItemsInWindow(group, windowStart, windowEnd)
+      result.push(...fitted)
+    }
+  }
+
+  return [...result, ...untimed]
+}
+
+function reorderAndCascade(items: Item[], oldIndex: number, newIndex: number): Item[] {
+  const valid = items.filter(Boolean)
+  const reordered = arrayMove([...valid], oldIndex, newIndex)
+  return cascadeItems(reordered)
+}
+
+function autoAssignTimes(items: Item[]): Item[] {
+  const START_HOUR = 8
+  let cursor = START_HOUR * 60
+  return items.map((item) => {
+    if (item.time_locked) return item // never touch locked items
+    const duration = getDuration(item)
+    const start = cursor
+    const end = start + duration
+    cursor = end
+    return {
+      ...item,
+      start_time: minutesToTime(start),
+      end_time: minutesToTime(end),
+      duration_minutes: duration,
+    }
+  })
 }
 
 // ─── Edit Trip Modal ──────────────────────────────────────────────────────────
@@ -261,9 +401,12 @@ function AccomModal({ tripId, accom, tripStart, tripEnd, onSaved, onClose }: {
 
 // ─── Detail Panel ─────────────────────────────────────────────────────────────
 
-function DetailPanel({ item, onClose, onChange, onDelete }: {
-  item: Item; onClose: () => void
-  onChange: (updated: Item) => void; onDelete: (id: string) => void
+function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
+  item: Item
+  onClose: () => void
+  onChange: (updated: Item) => void
+  onDelete: (id: string) => void
+  onCascade: (updated: Item) => void
 }) {
   const [tab, setTab] = useState<'details' | 'notes'>('details')
   const [title, setTitle] = useState(item.title)
@@ -271,6 +414,8 @@ function DetailPanel({ item, onClose, onChange, onDelete }: {
   const [notes, setNotes] = useState(item.notes ?? '')
   const [startTime, setStartTime] = useState(item.start_time ?? '')
   const [endTime, setEndTime] = useState(item.end_time ?? '')
+  const [durationHours, setDurationHours] = useState(Math.floor(getDuration(item) / 60))
+  const [durationMins, setDurationMins] = useState(getDuration(item) % 60)
   const [confirmed, setConfirmed] = useState(item.confirmed ?? false)
   const [confirmation, setConfirmation] = useState(item.confirmation ?? '')
   const [imageUrl, setImageUrl] = useState(item.image_url ?? '')
@@ -284,13 +429,15 @@ function DetailPanel({ item, onClose, onChange, onDelete }: {
     setSubtitle(item.subtitle ?? '')
     setStartTime(item.start_time ?? '')
     setEndTime(item.end_time ?? '')
+    setDurationHours(Math.floor(getDuration(item) / 60))
+    setDurationMins(getDuration(item) % 60)
     setConfirmed(item.confirmed ?? false)
     setConfirmation(item.confirmation ?? '')
     setImageUrl(item.image_url ?? '')
     setNotes(item.notes ?? '')
   }, [item.id])
 
-  const save = (fields: Partial<Item>) => {
+  const saveField = (fields: Partial<Item>) => {
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
       setSaving(true)
@@ -301,6 +448,54 @@ function DetailPanel({ item, onClose, onChange, onDelete }: {
         setSaving(false)
       }
     }, 600)
+  }
+
+  // When start time changes: preserve duration, recalculate end, cascade
+  const handleStartTimeBlur = (val: string) => {
+    if (!val) return
+    const duration = durationHours * 60 + durationMins
+    const newEnd = minutesToTime(timeToMinutes(val) + duration)
+    setEndTime(newEnd)
+    const updated: Item = {
+      ...item,
+      start_time: val,
+      end_time: newEnd,
+      duration_minutes: duration,
+    }
+    onCascade(updated)
+  }
+
+  // When end time changes: recalculate duration, cascade
+  const handleEndTimeBlur = (val: string) => {
+    if (!val || !startTime) return
+    const duration = Math.max(0, timeToMinutes(val) - timeToMinutes(startTime))
+    setDurationHours(Math.floor(duration / 60))
+    setDurationMins(duration % 60)
+    const updated: Item = {
+      ...item,
+      start_time: startTime,
+      end_time: val,
+      duration_minutes: duration,
+    }
+    onCascade(updated)
+  }
+
+  // When duration changes: preserve start, recalculate end, cascade
+  const handleDurationBlur = () => {
+    const duration = durationHours * 60 + durationMins
+    if (!startTime) {
+      saveField({ duration_minutes: duration })
+      return
+    }
+    const newEnd = minutesToTime(timeToMinutes(startTime) + duration)
+    setEndTime(newEnd)
+    const updated: Item = {
+      ...item,
+      start_time: startTime,
+      end_time: newEnd,
+      duration_minutes: duration,
+    }
+    onCascade(updated)
   }
 
   const handleDelete = async () => {
@@ -316,7 +511,6 @@ function DetailPanel({ item, onClose, onChange, onDelete }: {
 
   return (
     <div className="w-80 shrink-0 bg-white border-l border-gray-100 flex flex-col h-full">
-      {/* Image hero */}
       {imageUrl && (
         <div className="h-40 w-full overflow-hidden shrink-0">
           <img src={imageUrl} alt={title} className="w-full h-full object-cover"
@@ -360,36 +554,86 @@ function DetailPanel({ item, onClose, onChange, onDelete }: {
               <label className="block text-xs font-medium text-gray-500 mb-1">Title</label>
               <input type="text" value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                onBlur={(e) => save({ title: e.target.value })}
+                onBlur={(e) => saveField({ title: e.target.value })}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
             </div>
+
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Subtitle</label>
               <input type="text" value={subtitle} placeholder="e.g. Terminal 3 · Gate 22"
                 onChange={(e) => setSubtitle(e.target.value)}
-                onBlur={(e) => save({ subtitle: e.target.value })}
+                onBlur={(e) => saveField({ subtitle: e.target.value })}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
             </div>
+
+            {/* Duration */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Duration</label>
+              <div className="flex gap-2 items-center">
+                <div className="flex-1 flex items-center gap-1">
+                  <input
+                    type="number" min={0} max={23} value={durationHours}
+                    onChange={(e) => setDurationHours(Number(e.target.value))}
+                    onBlur={handleDurationBlur}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                  <span className="text-xs text-gray-400 shrink-0">hr</span>
+                </div>
+                <div className="flex-1 flex items-center gap-1">
+                  <input
+                    type="number" min={0} max={59} value={durationMins}
+                    onChange={(e) => setDurationMins(Number(e.target.value))}
+                    onBlur={handleDurationBlur}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                  <span className="text-xs text-gray-400 shrink-0">min</span>
+                </div>
+              </div>
+            </div>
+
+	    {/* Time lock */}
+            <div className="flex items-center justify-between py-1">
+              <div>
+                <div className="text-xs font-medium text-gray-500">Lock time</div>
+                <div className="text-xs text-gray-400 mt-0.5">
+                  Prevents this item moving when others are rescheduled
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  const updated = await updateItem(item.id, { time_locked: !item.time_locked })
+                  onChange(updated)
+                }}
+                className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
+                  item.time_locked ? 'bg-amber-400' : 'bg-gray-200'
+                }`}
+              >
+                <span className={`inline-block h-4 w-4 mt-0.5 rounded-full bg-white shadow transition-transform ${
+                  item.time_locked ? 'translate-x-4' : 'translate-x-0.5'
+                }`} />
+              </button>
+            </div>
+
+            {/* Times */}
             <div className="flex gap-2">
               <div className="flex-1">
                 <label className="block text-xs font-medium text-gray-500 mb-1">Start time</label>
                 <input type="time" value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  onBlur={(e) => save({ start_time: e.target.value || undefined })}
+                  onBlur={(e) => handleStartTimeBlur(e.target.value)}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
               </div>
               <div className="flex-1">
                 <label className="block text-xs font-medium text-gray-500 mb-1">End time</label>
                 <input type="time" value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  onBlur={(e) => save({ end_time: e.target.value || undefined })}
+                  onBlur={(e) => handleEndTimeBlur(e.target.value)}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
               </div>
             </div>
+
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-medium text-gray-500">Confirmation</label>
-                <button onClick={() => { setConfirmed(!confirmed); save({ confirmed: !confirmed }) }}
+                <button onClick={() => { setConfirmed(!confirmed); saveField({ confirmed: !confirmed }) }}
                   className={`text-xs px-2 py-0.5 rounded-full font-medium transition-colors ${
                     confirmed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
                   }`}>
@@ -398,14 +642,15 @@ function DetailPanel({ item, onClose, onChange, onDelete }: {
               </div>
               <input type="text" value={confirmation} placeholder="e.g. PNR: ABC123"
                 onChange={(e) => setConfirmation(e.target.value)}
-                onBlur={(e) => save({ confirmation: e.target.value })}
+                onBlur={(e) => saveField({ confirmation: e.target.value })}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
             </div>
+
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Image URL</label>
               <input type="text" value={imageUrl} placeholder="https://…"
                 onChange={(e) => setImageUrl(e.target.value)}
-                onBlur={(e) => save({ image_url: e.target.value || undefined })}
+                onBlur={(e) => saveField({ image_url: e.target.value || undefined })}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
               {imageUrl && (
                 <div className="mt-2 rounded-lg overflow-hidden h-24 bg-gray-50">
@@ -414,6 +659,7 @@ function DetailPanel({ item, onClose, onChange, onDelete }: {
                 </div>
               )}
             </div>
+
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-2">Type</label>
               <div className="flex flex-wrap gap-1.5">
@@ -431,12 +677,13 @@ function DetailPanel({ item, onClose, onChange, onDelete }: {
             </div>
           </>
         )}
+
         {tab === 'notes' && (
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Notes</label>
             <textarea value={notes} rows={8} placeholder="Add any notes here…"
               onChange={(e) => setNotes(e.target.value)}
-              onBlur={(e) => save({ notes: e.target.value })}
+              onBlur={(e) => saveField({ notes: e.target.value })}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
           </div>
         )}
@@ -507,9 +754,16 @@ function ItemCard({ item, active, onClick, dragHandle }: {
         )}
       </div>
 
+      {/* Lock indicator */}
+      {item.time_locked && (
+        <div className="shrink-0 pr-1">
+          <Icon name="lock" className="text-amber-400 !text-base" />
+        </div>
+      )}
+
       {/* Full-height image flush right */}
       {item.image_url && (
-        <div className="w-20 self-stretch shrink-0">
+        <div className="w-26 self-stretch shrink-0">
           <img src={item.image_url} alt={item.title} className="w-full h-full object-cover"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
         </div>
@@ -532,7 +786,11 @@ function SortableItem({ item, active, onClick }: {
     opacity: isDragging ? 0 : 1,
   }
 
-  const handle = (
+  const handle = item.time_locked ? (
+    <div className="shrink-0 text-amber-400" title="Time locked">
+      <Icon name="lock" />
+    </div>
+  ) : (
     <button {...attributes} {...listeners}
       className="shrink-0 text-gray-200 hover:text-gray-400 transition-colors cursor-grab active:cursor-grabbing touch-none"
       onClick={(e) => e.stopPropagation()}>
@@ -701,11 +959,13 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
     days.find((d) => d.items.some((i) => i.id === itemId))
 
   const handleDragStart = (event: DragStartEvent) => {
+console.log('DRAG START', event.active.id)
     const item = event.active.data.current?.item as Item | undefined
     if (item) setActiveDragItem(item)
   }
 
   const handleDragOver = (event: DragOverEvent) => {
+
     const { active, over } = event
     if (!over) { setOverDayId(null); return }
     const overId = over.id as string
@@ -716,6 +976,7 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
+console.log('DRAG END', event.active.id, event.over?.id)
     const { active, over } = event
     setActiveDragItem(null)
     setOverDayId(null)
@@ -737,17 +998,25 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
       const sorted = sortItemsByTime(sourceDay.items)
       const oldIndex = sorted.findIndex((i) => i.id === activeId)
       const newIndex = sorted.findIndex((i) => i.id === overId)
-      if (oldIndex === newIndex) return
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
 
-      const reordered = arrayMove(sorted, oldIndex, newIndex)
-      const withTimes = autoAssignTimes(reordered)
+      const withTimes = reorderAndCascade(sorted, oldIndex, newIndex)
 
       setDays((prev) => prev.map((d) =>
         d.id === sourceDay.id ? { ...d, items: withTimes } : d
       ))
       await Promise.all(withTimes.map((item, idx) =>
-        updateItem(item.id, { sort_order: idx, start_time: item.start_time, end_time: item.end_time })
+        updateItem(item.id, {
+          sort_order: idx,
+          start_time: item.start_time,
+          end_time: item.end_time,
+          duration_minutes: item.duration_minutes,
+        })
       ))
+      if (selectedItem) {
+        const refreshed = withTimes.find((i) => i.id === selectedItem.id)
+        if (refreshed) setSelectedItem(refreshed)
+      }
     } else {
       const movingItem = sourceDay.items.find((i) => i.id === activeId)
       if (!movingItem) return
@@ -765,23 +1034,48 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
     }
   }
 
-  const handleSingleDayDragEnd = async (event: DragEndEvent) => {
+const handleSingleDayDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
     setActiveDragItem(null)
-    if (!over || active.id === over.id || !activeDay) return
+    if (!over || active.id === over.id) return
 
-    const oldIndex = singleDayItems.findIndex((i) => i.id === active.id)
-    const newIndex = singleDayItems.findIndex((i) => i.id === over.id)
-    const reordered = arrayMove(singleDayItems, oldIndex, newIndex)
-    const withTimes = autoAssignTimes(reordered)
+    const currentDay = days.find((d) => d.id === activeTabId)
+    if (!currentDay) return
 
-    setDays((prev) => prev.map((d) => d.id === activeDay.id ? { ...d, items: withTimes } : d))
+    const currentItems = sortItemsByTime([...currentDay.items])
+    const oldIndex = currentItems.findIndex((i) => i.id === active.id)
+    const newIndex = currentItems.findIndex((i) => i.id === over.id)
+
+    console.log('oldIndex', oldIndex, 'newIndex', newIndex)
+
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
+
+    const withTimes = reorderAndCascade(currentItems, oldIndex, newIndex)
+
+    console.log('withTimes', withTimes.map(i => ({ title: i.title, start: i.start_time })))
+
+    setDays((prev) => {
+      const next = prev.map((d) =>
+        d.id === currentDay.id
+          ? { ...d, items: withTimes.map((item) => ({ ...item })) }
+          : d
+      )
+      console.log('setDays called, new items for day:', next.find(d => d.id === currentDay.id)?.items.map(i => i.title))
+      return next
+    })
+
     await Promise.all(withTimes.map((item, idx) =>
-      updateItem(item.id, { sort_order: idx, start_time: item.start_time, end_time: item.end_time })
+      updateItem(item.id, {
+        sort_order: idx,
+        start_time: item.start_time,
+        end_time: item.end_time,
+        duration_minutes: item.duration_minutes,
+      })
     ))
+
     if (selectedItem) {
       const refreshed = withTimes.find((i) => i.id === selectedItem.id)
-      if (refreshed) setSelectedItem(refreshed)
+      if (refreshed) setSelectedItem({ ...refreshed })
     }
   }
 
@@ -814,6 +1108,33 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
   }
 
   const todayAccom = activeDay ? getAccomForDate(accom, activeDay.date) : undefined
+
+// Called whenever an item's time or duration changes — cascades the whole day
+  const cascadeDayFromItem = async (updatedItem: Item) => {
+    const day = days.find((d) => d.items.some((i) => i.id === updatedItem.id))
+    if (!day) return
+
+    const dayItems = sortItemsByTime(
+      day.items.map((i) => i.id === updatedItem.id ? updatedItem : i)
+    )
+    const cascaded = cascadeItems(dayItems)
+
+    setDays((prev) => prev.map((d) =>
+      d.id === day.id ? { ...d, items: cascaded } : d
+    ))
+    setSelectedItem((prev) =>
+      prev ? (cascaded.find((i) => i.id === prev.id) ?? prev) : null
+    )
+
+    await Promise.all(cascaded.map((item, idx) =>
+      updateItem(item.id, {
+        sort_order: idx,
+        start_time: item.start_time,
+        end_time: item.end_time,
+        duration_minutes: item.duration_minutes,
+      })
+    ))
+  }
 
   return (
     <AppShell>
@@ -1013,12 +1334,13 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
           {/* Detail panel */}
           {selectedItem && (
             <DetailPanel
-              key={selectedItem.id}
-              item={selectedItem}
-              onClose={() => setSelectedItem(null)}
-              onChange={handleChange}
-              onDelete={handleDelete}
-            />
+                key={selectedItem.id}
+                item={selectedItem}
+                onClose={() => setSelectedItem(null)}
+                onChange={handleChange}
+                onDelete={handleDelete}
+                onCascade={cascadeDayFromItem}
+              />
           )}
         </div>
 

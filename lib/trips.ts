@@ -94,6 +94,7 @@ export async function addItem(
       title: '',
       start_time: '09:00',
       end_time: '10:00',
+      duration_minutes: 60,
       sort_order: nextOrder,
     })
     .select()
@@ -106,7 +107,8 @@ export async function updateItem(
   itemId: string,
   updates: Partial<Pick<Item,
     'title' | 'type' | 'notes' | 'start_time' | 'end_time' |
-    'sort_order' | 'subtitle' | 'confirmation' | 'confirmed' | 'image_url' | 'day_id'>>
+    'sort_order' | 'subtitle' | 'confirmation' | 'confirmed' |
+    'image_url' | 'day_id' | 'duration_minutes' | 'time_locked'>>
 ): Promise<Item> {
   const cleaned: typeof updates = { ...updates }
   if ('start_time' in cleaned && !cleaned.start_time) cleaned.start_time = undefined

@@ -27,10 +27,12 @@ export interface Item {
   notes?: string
   start_time?: string
   end_time?: string
+  duration_minutes?: number
   confirmation?: string
   confirmed?: boolean
   sort_order: number
   image_url?: string
+  time_locked?: boolean
 }
 
 export interface Accommodation {
