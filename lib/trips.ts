@@ -108,7 +108,10 @@ export async function updateItem(
   updates: Partial<Pick<Item,
     'title' | 'type' | 'notes' | 'start_time' | 'end_time' |
     'sort_order' | 'subtitle' | 'confirmation' | 'confirmed' |
-    'image_url' | 'day_id' | 'duration_minutes' | 'time_locked'>>
+    'image_url' | 'day_id' | 'duration_minutes' | 'time_locked' |
+    'location' | 'location_lat' | 'location_lng' |
+    'location_from' | 'location_from_lat' | 'location_from_lng' |
+    'location_to' | 'location_to_lat' | 'location_to_lng'>>
 ): Promise<Item> {
   const cleaned: typeof updates = { ...updates }
   if ('start_time' in cleaned && !cleaned.start_time) cleaned.start_time = undefined

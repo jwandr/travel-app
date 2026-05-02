@@ -12,13 +12,15 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  addItem, updateItem, deleteItem, updateTrip,
+  addItem, updateItem, deleteItem, updateTrip, deleteTrip,
   getAccommodation, addAccommodation, updateAccommodation, deleteAccommodation,
 } from '@/lib/trips'
 import AppShell from '@/components/AppShell'
 import ShareModal from '@/components/ShareModal'
 import { supabase } from '@/lib/supabase'
 import type { Trip, Day, Item, ItemType, Accommodation } from '@/lib/types'
+import type TripMap from './TripMap'
+import LocationInput from '@/components/LocationInput'
 
 // ─── Icon ─────────────────────────────────────────────────────────────────────
 
@@ -178,15 +180,29 @@ function autoAssignTimes(items: Item[]): Item[] {
 
 // ─── Edit Trip Modal ──────────────────────────────────────────────────────────
 
-function EditTripModal({ trip, onSaved, onClose }: {
-  trip: Trip; onSaved: (t: Trip) => void; onClose: () => void
+function EditTripModal({ trip, onSaved, onClose, onDeleted }: {
+  trip: Trip; onSaved: (t: Trip) => void; onClose: () => void; onDeleted: () => void
 }) {
   const [name, setName] = useState(trip.name)
   const [startDate, setStartDate] = useState(trip.start_date)
   const [duration, setDuration] = useState(trip.duration_days)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const datesChanged = startDate !== trip.start_date || duration !== trip.duration_days
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      await deleteTrip(trip.id)
+      onDeleted()
+    } catch (e: any) {
+      setError(e.message ?? 'Failed to delete trip.')
+      setDeleting(false)
+      setConfirmingDelete(false)
+    }
+  }
 
   const handleSave = async () => {
     if (!name.trim()) return setError('Trip name is required.')
@@ -239,6 +255,40 @@ function EditTripModal({ trip, onSaved, onClose }: {
           <button onClick={handleSave} disabled={saving} className="flex-1 bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
             {saving ? 'Saving…' : 'Save changes'}
           </button>
+        </div>
+
+        {/* Delete trip */}
+        <div className="border-t border-gray-100 pt-4">
+          {!confirmingDelete ? (
+            <button
+              onClick={() => setConfirmingDelete(true)}
+              className="flex items-center gap-2 text-sm text-red-400 hover:text-red-600 transition-colors"
+            >
+              <Icon name="delete" className="text-red-400 !text-base" />
+              Delete this trip
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-700 font-medium">
+                Are you sure? This will permanently delete the trip and all its data.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmingDelete(false)}
+                  className="flex-1 border border-gray-200 text-gray-600 rounded-lg py-2 text-sm font-medium hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 bg-red-500 text-white rounded-lg py-2 text-sm font-medium hover:bg-red-600 disabled:opacity-50"
+                >
+                  {deleting ? 'Deleting…' : 'Yes, delete trip'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -529,6 +579,58 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
                 </div>
               )}
             </div>
+	    {/* Location */}
+            {(item.type === 'activity' || item.type === 'food') && (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Location</label>
+                <LocationInput
+                  value={item.location ?? ''}
+                  onChange={async (val, lat, lng) => {
+                    const updated = await updateItem(item.id, {
+                      location: val,
+                      location_lat: lat,
+                      location_lng: lng,
+                    })
+                    onChange(updated)
+                  }}
+                />
+              </div>
+            )}
+
+            {(item.type === 'travel' || item.type === 'transport') && (
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">From</label>
+                  <LocationInput
+                    value={item.location_from ?? ''}
+                    placeholder="Departure location"
+                    onChange={async (val, lat, lng) => {
+                      const updated = await updateItem(item.id, {
+                        location_from: val,
+                        location_from_lat: lat,
+                        location_from_lng: lng,
+                      })
+                      onChange(updated)
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">To</label>
+                  <LocationInput
+                    value={item.location_to ?? ''}
+                    placeholder="Arrival location"
+                    onChange={async (val, lat, lng) => {
+                      const updated = await updateItem(item.id, {
+                        location_to: val,
+                        location_to_lat: lat,
+                        location_to_lng: lng,
+                      })
+                      onChange(updated)
+                    }}
+                  />
+                </div>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-2">Type</label>
               <div className="flex flex-wrap gap-1.5">
@@ -800,6 +902,24 @@ function StatsBar({ trip, days }: { trip: Trip; days: Day[] }) {
 // ─── Main View ────────────────────────────────────────────────────────────────
 
 const OVERVIEW_ID = '__overview__'
+const MAP_TAB = '__map__'
+
+// Lazy-loaded map to avoid SSR issues with Leaflet
+function TripMapLoader(props: React.ComponentProps<typeof TripMap>) {
+  const [Map, setMap] = useState<typeof TripMap | null>(null)
+
+  useEffect(() => {
+    import('./TripMap').then((mod) => setMap(() => mod.default))
+  }, [])
+
+  if (!Map) return (
+    <div className="flex items-center justify-center h-full text-gray-300 text-sm animate-pulse">
+      Loading map…
+    </div>
+  )
+
+  return <Map {...props} />
+}
 
 export default function TripView({ trip: initialTrip, days: initialDays, userId }: {
   trip: Trip; days: Day[]; userId: string
@@ -816,6 +936,8 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
   const [accomModal, setAccomModal] = useState<{ open: boolean; accom?: Accommodation; defaultDate?: string }>({ open: false })
   const [activeDragItem, setActiveDragItem] = useState<Item | null>(null)
   const [overDayId, setOverDayId] = useState<string | null>(null)
+  const [showMap, setShowMap] = useState(false)
+  const [showDayMap, setShowDayMap] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -1032,6 +1154,13 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
                   </button>
                 )
               })}
+	      <button onClick={() => setActiveTabId(MAP_TAB)}
+                className={`flex flex-col items-center px-3 py-2 rounded-xl text-xs shrink-0 transition-colors border ${
+                  activeTabId === MAP_TAB ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-transparent text-gray-400 hover:bg-gray-50'
+                }`} style={{ minWidth: '80px' }}>
+                <span className={`font-semibold text-sm ${activeTabId === MAP_TAB ? 'text-indigo-700' : 'text-gray-700'}`}>Map</span>
+                <span>All stops</span>
+              </button>
             </div>
           </div>
         </div>
@@ -1039,7 +1168,17 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
         {/* ── Body ── */}
         <div className="flex flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto px-4 py-4">
-            {isOverview ? (
+            {activeTabId === MAP_TAB ? (
+              <div className="h-full -mx-4 -mt-4">
+                <TripMapLoader
+                  days={days}
+                  accom={accom}
+                  onSelectItem={(item) => setSelectedItem(selectedItem?.id === item.id ? null : item)}
+                  selectedItemId={selectedItem?.id}
+                  mode="trip"
+                />
+              </div>
+            ) : isOverview ? (
               <DndContext sensors={sensors} collisionDetection={closestCenter}
                 onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
                 <div className="space-y-4 max-w-2xl mx-auto">
@@ -1066,9 +1205,36 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
             ) : (
               <>
                 {activeDay && (
-                  <p className="text-sm text-gray-400 mb-4 max-w-2xl mx-auto">
-                    {new Date(activeDay.date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                  </p>
+                  <div className="flex items-center justify-between mb-4 max-w-2xl mx-auto">
+                    <p className="text-sm text-gray-400">
+                      {new Date(activeDay.date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                    <button
+                      onClick={() => setShowDayMap((prev) => !prev)}
+                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                        showDayMap
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                      }`}
+                    >
+                      <span className="material-symbols-rounded" style={{ fontSize: 14 }}>map</span>
+                      {showDayMap ? 'Hide map' : 'Day map'}
+                    </button>
+                  </div>
+                )}
+
+		{/* Day map */}
+                {showDayMap && activeDay && (
+                  <div className="max-w-2xl mx-auto mb-4 rounded-2xl overflow-hidden border border-gray-100 shadow-sm" style={{ height: '280px' }}>
+                    <TripMapLoader
+                      days={days}
+                      accom={accom}
+                      onSelectItem={(item) => setSelectedItem(selectedItem?.id === item.id ? null : item)}
+                      selectedItemId={selectedItem?.id}
+                      mode="day"
+                      activeDayId={activeDay.id}
+                    />
+                  </div>
                 )}
 
                 <DndContext sensors={sensors} collisionDetection={closestCenter}
@@ -1161,7 +1327,14 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
         </div>
       )}
 
-      {showEdit && <EditTripModal trip={trip} onSaved={handleTripSaved} onClose={() => setShowEdit(false)} />}
+      {showEdit && (
+        <EditTripModal
+          trip={trip}
+          onSaved={handleTripSaved}
+          onClose={() => setShowEdit(false)}
+          onDeleted={() => router.push('/dashboard')}
+        />
+      )}
       {showShare && <ShareModal trip={trip} userId={userId} userEmail={userEmail} onClose={() => setShowShare(false)} />}
       {accomModal.open && (
         <AccomModal

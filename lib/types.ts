@@ -33,6 +33,15 @@ export interface Item {
   sort_order: number
   image_url?: string
   time_locked?: boolean
+  location?: string
+  location_lat?: number
+  location_lng?: number
+  location_from?: string
+  location_from_lat?: number
+  location_from_lng?: number
+  location_to?: string
+  location_to_lat?: number
+  location_to_lng?: number
 }
 
 export interface Accommodation {
