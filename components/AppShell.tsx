@@ -62,7 +62,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isTripsActive = pathname === '/dashboard' || pathname.startsWith('/trip')
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-dvh bg-gray-50 overflow-hidden">
 
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex w-52 shrink-0 bg-white border-r border-gray-100 flex-col">
@@ -146,8 +146,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* ── Main content ── */}
       <main className="flex-1 overflow-hidden flex flex-col">
-        {/* Mobile top bar */}
-        <div className="md:hidden bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0">
+        {/* Mobile top bar — hidden on trip pages since trip view has its own header */}
+        <div className={`md:hidden bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0 ${
+          pathname.startsWith('/trip') ? 'hidden' : 'flex'
+        }`}>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
               <Icon name="flight" className="text-white !text-sm" />

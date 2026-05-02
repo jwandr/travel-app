@@ -574,9 +574,21 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
       {/* Mobile: bottom sheet */}
       <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
         <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-        <div className="relative bg-white rounded-t-2xl flex flex-col" style={{ maxHeight: '92vh' }}>
-          {/* Drag handle */}
-          <div className="flex justify-center pt-3 pb-1 shrink-0">
+        <div
+          className="relative bg-white rounded-t-2xl flex flex-col"
+          style={{ maxHeight: '92vh' }}
+          onTouchStart={(e) => {
+            const touch = e.touches[0]
+            ;(e.currentTarget as any)._touchStartY = touch.clientY
+          }}
+          onTouchEnd={(e) => {
+            const startY = (e.currentTarget as any)._touchStartY
+            const endY = e.changedTouches[0].clientY
+            if (endY - startY > 80) onClose()
+          }}
+        >
+          {/* Swipe handle — now functional */}
+          <div className="flex justify-center pt-3 pb-1 shrink-0 cursor-grab">
             <div className="w-10 h-1 bg-gray-200 rounded-full" />
           </div>
           {panelContent}
@@ -615,21 +627,28 @@ function ItemCard({ item, active, onClick, dragHandle }: {
           )}
         </div>
         <div className="shrink-0">
-          <div className={`w-2 h-2 rounded-full ${item.start_time ? cfg.bg.replace('100', '400') : 'bg-gray-200'}`} />
+          <div className={`w-2 h-2 rounded-full ${item.start_time ? cfg.bg.replace('100', '500') : 'bg-gray-200'}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-gray-900">{item.title || <span className="text-gray-300 font-normal">Untitled item</span>}</div>
+          <div className="text-sm font-semibold text-gray-900 pr-1">{item.title || <span className="text-gray-300 font-normal">Untitled item</span>}</div>
           {item.subtitle && <div className="text-xs text-gray-400 mt-0.5">{item.subtitle}</div>}
+          {/* Confirmed badge inline on mobile */}
+          {item.confirmed && (
+            <span className="sm:hidden inline-flex mt-1 text-xs px-2 py-0.5 bg-green-50 text-green-600 border border-green-200 rounded-full font-medium">
+              Confirmed
+            </span>
+          )}
         </div>
         {item.time_locked && <Icon name="lock" className="text-amber-400 !text-base shrink-0" />}
+        {/* Confirmed badge on desktop only */}
         {item.confirmed && (
-          <span className="shrink-0 text-xs px-2 py-0.5 bg-green-50 text-green-600 border border-green-200 rounded-full font-medium">
+          <span className="hidden sm:inline-flex shrink-0 text-xs px-2 py-0.5 bg-green-50 text-green-600 border border-green-200 rounded-full font-medium">
             Confirmed
           </span>
         )}
       </div>
       {item.image_url && (
-        <div className="w-20 self-stretch shrink-0">
+        <div className="hidden sm:block w-20 self-stretch shrink-0">
           <img src={item.image_url} alt={item.title} className="w-full h-full object-cover"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
         </div>
@@ -967,7 +986,7 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
                   <Icon name="edit" />
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="hidden sm:block text-xs text-gray-400 mt-0.5">
                 {formatDateRange(trip.start_date, trip.duration_days)} · {trip.duration_days} days
               </p>
             </div>
@@ -1126,7 +1145,9 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
           )}
         </div>
 
-        <StatsBar trip={trip} days={days} />
+        <div className="hidden sm:block">
+          <StatsBar trip={trip} days={days} />
+        </div>
       </div>
 
       {/* Mobile detail panel — outside the scroll container */}
