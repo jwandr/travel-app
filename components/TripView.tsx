@@ -34,7 +34,6 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 const TYPE_CONFIG: Record<ItemType, { label: string; bg: string; text: string; icon: string }> = {
   travel:    { label: 'Flight',    bg: 'bg-sky-100',    text: 'text-sky-600',    icon: 'flight' },
   transport: { label: 'Transport', bg: 'bg-green-100',  text: 'text-green-600',  icon: 'train' },
-  stay:      { label: 'Stay',      bg: 'bg-indigo-100', text: 'text-indigo-600', icon: 'bed' },
   activity:  { label: 'Activity',  bg: 'bg-amber-100',  text: 'text-amber-600',  icon: 'attractions' },
   food:      { label: 'Food',      bg: 'bg-orange-100', text: 'text-orange-600', icon: 'restaurant' },
 }
@@ -322,6 +321,7 @@ function AccomModal({ tripId, accom, tripStart, tripEnd, onSaved, onClose }: {
   const [confirmation, setConfirmation] = useState(accom?.confirmation ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [confirmed, setConfirmed] = useState(accom?.confirmed ?? false)
 
   const handleSave = async () => {
     if (!name.trim()) return setError('Name is required.')
@@ -330,8 +330,8 @@ function AccomModal({ tripId, accom, tripStart, tripEnd, onSaved, onClose }: {
     setSaving(true)
     try {
       const saved = accom
-        ? await updateAccommodation(accom.id, { name, address, check_in: checkIn, check_out: checkOut, confirmation })
-        : await addAccommodation(tripId, { name, check_in: checkIn, check_out: checkOut })
+        ? await updateAccommodation(accom.id, { name, address, check_in: checkIn, check_out: checkOut, confirmation, confirmed })
+        : await addAccommodation(tripId, { name, check_in: checkIn, check_out: checkOut, confirmation, confirmed })
       onSaved(saved)
     } catch (e: any) {
       setError(e.message ?? 'Something went wrong.')
@@ -357,7 +357,7 @@ function AccomModal({ tripId, accom, tripStart, tripEnd, onSaved, onClose }: {
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
             <input type="text" value={address} onChange={(e) => setAddress(e.target.value)}
               placeholder="e.g. Kyoto"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
@@ -377,7 +377,16 @@ function AccomModal({ tripId, accom, tripStart, tripEnd, onSaved, onClose }: {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirmation</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">Confirmation</label>
+              <button
+                onClick={() => setConfirmed(!confirmed)}
+                className={`text-xs px-2 py-0.5 rounded-full font-medium transition-colors ${
+                  confirmed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
+                }`}>
+                {confirmed ? 'Confirmed' : 'Unconfirmed'}
+              </button>
+            </div>
             <input type="text" value={confirmation} onChange={(e) => setConfirmation(e.target.value)}
               placeholder="e.g. Booking ref #123"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
@@ -422,7 +431,7 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const cfg = TYPE_CONFIG[item.type]
+  const cfg = TYPE_CONFIG[item.type] ?? TYPE_CONFIG['activity']
 
   useEffect(() => {
     setTitle(item.title)
@@ -741,10 +750,10 @@ function ItemCard({ item, active, onClick, dragHandle }: {
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-gray-900 truncate">
+          <div className="text-sm font-semibold text-gray-900">
             {item.title || <span className="text-gray-300 font-normal">Untitled item</span>}
           </div>
-          {item.subtitle && <div className="text-xs text-gray-400 truncate mt-0.5">{item.subtitle}</div>}
+          {item.subtitle && <div className="text-xs text-gray-400 mt-0.5">{item.subtitle}</div>}
         </div>
 
         {item.confirmed && (
@@ -806,7 +815,6 @@ function SortableItem({ item, active, onClick }: {
 }
 
 // ─── Day Drop Zone ────────────────────────────────────────────────────────────
-
 function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver }: {
   day: Day; accom: Accommodation[]; items: Item[]
   selectedId: string | null
@@ -822,6 +830,7 @@ function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver
     <div className={`rounded-2xl border-2 transition-colors p-4 ${
       isOver ? 'border-indigo-300 bg-indigo-50/40' : 'border-transparent'
     }`}>
+      {/* Day header */}
       <div className="flex items-center gap-3 mb-3">
         <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
           <span className="text-xs font-bold text-white">{day.day_index}</span>
@@ -834,13 +843,7 @@ function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver
         {isOver && <span className="text-xs text-indigo-500 font-medium">Drop here</span>}
       </div>
 
-      {dayAccom && (
-        <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2 mb-3">
-          <Icon name="bed" className="text-indigo-400 shrink-0 !text-base" />
-          <span className="text-xs font-medium text-indigo-800 truncate">{dayAccom.name}</span>
-        </div>
-      )}
-
+      {/* Items */}
       <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className={`space-y-2 min-h-[56px] rounded-xl transition-colors ${
           isOver && items.length === 0 ? 'bg-indigo-50 border-2 border-dashed border-indigo-200' : ''
@@ -862,6 +865,24 @@ function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver
       </SortableContext>
 
       <AddItemRow onAdd={onAdd} />
+
+      {/* Tonight's stay — at bottom */}
+      {dayAccom && (
+        <div className="mt-4 pt-3 border-t border-gray-100">
+          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+            Tonight's Stay
+          </div>
+          <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
+            <Icon name="bed" className="text-indigo-400 shrink-0 !text-base" />
+            <div className="flex-1 min-w-0">
+              <span className="text-xs font-medium text-indigo-800">{dayAccom.name}</span>
+              {dayAccom.address && (
+                <span className="text-xs text-indigo-400 ml-1">· {dayAccom.address}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -897,9 +918,9 @@ function StatsBar({ trip, days }: { trip: Trip; days: Day[] }) {
   const stats = [
     { icon: 'calendar_month', value: trip.duration_days,           label: 'Days' },
     { icon: 'flight',         value: countByType(days, 'travel'),   label: 'Flights' },
-    { icon: 'bed',            value: countByType(days, 'stay'),     label: 'Nights' },
     { icon: 'attractions',    value: countByType(days, 'activity'), label: 'Activities' },
     { icon: 'restaurant',     value: countByType(days, 'food'),     label: 'Dining' },
+    { icon: 'train',          value: countByType(days, 'transport'),label: 'Transport' },
   ]
   return (
     <div className="border-t border-gray-100 bg-white px-6 py-3 flex items-center gap-8 shrink-0">
@@ -959,7 +980,6 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
     days.find((d) => d.items.some((i) => i.id === itemId))
 
   const handleDragStart = (event: DragStartEvent) => {
-console.log('DRAG START', event.active.id)
     const item = event.active.data.current?.item as Item | undefined
     if (item) setActiveDragItem(item)
   }
@@ -976,7 +996,6 @@ console.log('DRAG START', event.active.id)
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
-console.log('DRAG END', event.active.id, event.over?.id)
     const { active, over } = event
     setActiveDragItem(null)
     setOverDayId(null)
@@ -1046,13 +1065,9 @@ const handleSingleDayDragEnd = async (event: DragEndEvent) => {
     const oldIndex = currentItems.findIndex((i) => i.id === active.id)
     const newIndex = currentItems.findIndex((i) => i.id === over.id)
 
-    console.log('oldIndex', oldIndex, 'newIndex', newIndex)
-
     if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
 
     const withTimes = reorderAndCascade(currentItems, oldIndex, newIndex)
-
-    console.log('withTimes', withTimes.map(i => ({ title: i.title, start: i.start_time })))
 
     setDays((prev) => {
       const next = prev.map((d) =>
@@ -1060,7 +1075,6 @@ const handleSingleDayDragEnd = async (event: DragEndEvent) => {
           ? { ...d, items: withTimes.map((item) => ({ ...item })) }
           : d
       )
-      console.log('setDays called, new items for day:', next.find(d => d.id === currentDay.id)?.items.map(i => i.title))
       return next
     })
 
@@ -1261,28 +1275,6 @@ const handleSingleDayDragEnd = async (event: DragEndEvent) => {
             ) : (
               /* Single day view */
               <>
-                <div className="max-w-2xl mb-4">
-                  {todayAccom ? (
-                    <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
-                      <Icon name="bed" className="text-indigo-400 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-indigo-900">{todayAccom.name}</div>
-                        {todayAccom.address && (
-                          <div className="text-xs text-indigo-400 truncate">{todayAccom.address}</div>
-                        )}
-                      </div>
-                      <button onClick={() => setAccomModal({ open: true, accom: todayAccom })}
-                        className="text-indigo-400 hover:text-indigo-600 shrink-0">
-                        <Icon name="edit" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={() => setAccomModal({ open: true })}
-                      className="w-full flex items-center gap-2 px-4 py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:border-indigo-300 hover:text-indigo-500 transition-colors">
-                      <Icon name="bed" className="text-current" /> Add accommodation for this night
-                    </button>
-                  )}
-                </div>
 
                 {activeDay && (
                   <p className="text-sm text-gray-400 mb-4 max-w-2xl">
@@ -1326,6 +1318,46 @@ const handleSingleDayDragEnd = async (event: DragEndEvent) => {
 
                 <div className="max-w-2xl mt-2">
                   {activeDay && <AddItemRow onAdd={(type) => handleAdd(activeDay.id, type)} />}
+                </div>
+
+		{/* Tonight's stay */}
+                <div className="max-w-2xl mt-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                      Tonight's Stay
+                    </div>
+                    <div className="flex-1 h-px bg-gray-100" />
+                  </div>
+                  {todayAccom ? (
+                    <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+                      <Icon name="bed" className="text-indigo-400 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-indigo-900">{todayAccom.name}</div>
+                        {todayAccom.address && (
+                          <div className="text-xs text-indigo-400 mt-0.5">{todayAccom.address}</div>
+                        )}
+                        {todayAccom.confirmed && (
+                          <div className="text-xs text-green-600 mt-0.5 flex items-center gap-1">
+                            <Icon name="check_circle" className="text-green-500 !text-xs" />
+                            Confirmed
+                            {todayAccom.confirmation && ` · ${todayAccom.confirmation}`}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setAccomModal({ open: true, accom: todayAccom })}
+                        className="text-indigo-400 hover:text-indigo-600 shrink-0">
+                        <Icon name="edit" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setAccomModal({ open: true })}
+                      className="w-full flex items-center gap-2 px-4 py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:border-indigo-300 hover:text-indigo-500 transition-colors">
+                      <Icon name="bed" className="text-current" />
+                      Add accommodation for this night
+                    </button>
+                  )}
                 </div>
               </>
             )}

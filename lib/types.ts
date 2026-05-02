@@ -1,4 +1,4 @@
-export type ItemType = 'travel' | 'stay' | 'activity' | 'food' | 'transport'
+export type ItemType = 'travel' | 'activity' | 'food' | 'transport'
 
 export interface Trip {
   id: string

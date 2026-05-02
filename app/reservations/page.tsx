@@ -12,11 +12,11 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 }
 
 const TYPE_CONFIG: Record<string, { label: string; icon: string; bg: string; text: string }> = {
-  travel:    { label: 'Flight',    icon: 'flight',       bg: 'bg-sky-100',    text: 'text-sky-600' },
-  transport: { label: 'Transport', icon: 'train',        bg: 'bg-green-100',  text: 'text-green-600' },
-  stay:      { label: 'Stay',      icon: 'bed',          bg: 'bg-indigo-100', text: 'text-indigo-600' },
-  activity:  { label: 'Activity',  icon: 'attractions',  bg: 'bg-amber-100',  text: 'text-amber-600' },
-  food:      { label: 'Food',      icon: 'restaurant',   bg: 'bg-orange-100', text: 'text-orange-600' },
+  travel:        { label: 'Flight',        icon: 'flight',              bg: 'bg-sky-100',    text: 'text-sky-600' },
+  transport:     { label: 'Transport',     icon: 'train',               bg: 'bg-green-100',  text: 'text-green-600' },
+  activity:      { label: 'Activity',      icon: 'attractions',         bg: 'bg-amber-100',  text: 'text-amber-600' },
+  food:          { label: 'Food',          icon: 'restaurant',          bg: 'bg-orange-100', text: 'text-orange-600' },
+  accommodation: { label: 'Accommodation', icon: 'bed',                 bg: 'bg-indigo-100', text: 'text-indigo-600' },
 }
 
 type Reservation = Item & { day_date: string; trip_name: string }
@@ -129,27 +129,52 @@ export default function ReservationsPage() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Reservation | null>(null)
 
-  useEffect(() => {
+useEffect(() => {
     const load = async () => {
       const { data } = await supabase.auth.getUser()
       if (!data.user) { router.push('/login'); return }
 
-      // Fetch all confirmed items across all trips via join
-      const { data: items, error } = await supabase
+      // Fetch confirmed items
+      const { data: items } = await supabase
         .from('items')
         .select(`*, days!inner(date, trips!inner(name, created_by))`)
         .eq('confirmed', true)
         .eq('days.trips.created_by', data.user.id)
 
-      if (!error && items) {
-        const mapped: Reservation[] = items.map((item: any) => ({
-          ...item,
-          day_date: item.days.date,
-          trip_name: item.days.trips.name,
-        }))
-        mapped.sort((a, b) => a.day_date.localeCompare(b.day_date))
-        setReservations(mapped)
-      }
+      // Fetch confirmed accommodation
+      const { data: accomData } = await supabase
+        .from('accommodation')
+        .select(`*, trips!inner(name, created_by)`)
+        .eq('confirmed', true)
+        .eq('trips.created_by', data.user.id)
+
+      const mappedItems: Reservation[] = (items ?? []).map((item: any) => ({
+        ...item,
+        day_date: item.days.date,
+        trip_name: item.days.trips.name,
+      }))
+
+      // Map accommodation into the same Reservation shape
+      const mappedAccom: Reservation[] = (accomData ?? []).map((a: any) => ({
+        id: a.id,
+        trip_id: a.trip_id,
+        day_id: '',
+        type: 'accommodation' as any,
+        title: a.name,
+        subtitle: a.address ?? undefined,
+        confirmation: a.confirmation ?? undefined,
+        confirmed: true,
+        sort_order: 0,
+        day_date: a.check_in,
+        trip_name: a.trips.name,
+        notes: a.notes ?? undefined,
+        // Store check_out in subtitle for display
+        check_out: a.check_out,
+      }))
+
+      const all = [...mappedItems, ...mappedAccom]
+      all.sort((a, b) => a.day_date.localeCompare(b.day_date))
+      setReservations(all)
       setLoading(false)
     }
     load()
@@ -214,10 +239,15 @@ export default function ReservationsPage() {
                               <Icon name={cfg.icon} className={cfg.text} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-semibold text-gray-900 truncate">
+                              <div className="text-sm font-semibold text-gray-900">
                                 {item.title || 'Untitled'}
                               </div>
-                              <div className="text-xs text-gray-400 mt-0.5">{item.trip_name}</div>
+                              <div className="text-xs text-gray-400 mt-0.5">
+                                {item.trip_name}
+                                {(item as any).check_out && (
+                                  <span> · Check-out {new Date((item as any).check_out).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</span>
+                                )}
+                              </div>
                             </div>
                             <span className="shrink-0 text-xs px-2 py-0.5 bg-green-50 text-green-600 border border-green-200 rounded-full font-medium">
                               Confirmed
