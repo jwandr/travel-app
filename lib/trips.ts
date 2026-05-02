@@ -143,7 +143,7 @@ export async function getAccommodation(tripId: string): Promise<Accommodation[]>
 
 export async function addAccommodation(
   tripId: string,
-  input: Pick<Accommodation, 'name' | 'check_in' | 'check_out'>
+  input: Pick<Accommodation, 'name' | 'check_in' | 'check_out' | 'address' | 'confirmation' | 'confirmed'>
 ): Promise<Accommodation> {
   const { data, error } = await supabase
     .from('accommodation')

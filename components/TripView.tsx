@@ -331,7 +331,7 @@ function AccomModal({ tripId, accom, tripStart, tripEnd, onSaved, onClose }: {
     try {
       const saved = accom
         ? await updateAccommodation(accom.id, { name, address, check_in: checkIn, check_out: checkOut, confirmation, confirmed })
-        : await addAccommodation(tripId, { name, check_in: checkIn, check_out: checkOut, confirmation, confirmed })
+        : await addAccommodation(tripId, { name, address, check_in: checkIn, check_out: checkOut, confirmation, confirmed })
       onSaved(saved)
     } catch (e: any) {
       setError(e.message ?? 'Something went wrong.')
