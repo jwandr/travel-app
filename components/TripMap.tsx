@@ -3,12 +3,16 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Day, Item, Accommodation, ItemType } from '@/lib/types'
 
-const TYPE_COLOURS: Record<ItemType | 'accommodation', string> = {
-  travel:        '#0ea5e9',
-  transport:     '#22c55e',
-  activity:      '#f59e0b',
-  food:          '#f97316',
-  accommodation: '#6366f1',
+const TYPE_COLOURS: Record<string, string> = {
+  travel:    '#0ea5e9',
+  transport: '#22c55e',
+  activity:  '#f59e0b',
+  food:      '#f97316',
+  photo:     '#ec4899',
+  museum:    '#a855f7',
+  shopping:  '#f43f5e',
+  markets:   '#84cc16',
+  bakery:    '#eab308',
 }
 
 interface MapPin {

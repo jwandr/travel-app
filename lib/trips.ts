@@ -69,6 +69,14 @@ export async function getTrip(tripId: string): Promise<Day[]> {
   }))
 }
 
+export async function updateDay(dayId: string, updates: { notes?: string }): Promise<void> {
+  const { error } = await supabase
+    .from('days')
+    .update(updates)
+    .eq('id', dayId)
+  if (error) throw error
+}
+
 // ─── Items ────────────────────────────────────────────────────────────────────
 
 export async function addItem(

@@ -21,6 +21,7 @@ import { supabase } from '@/lib/supabase'
 import type { Trip, Day, Item, ItemType, Accommodation } from '@/lib/types'
 import type TripMap from './TripMap'
 import LocationInput from '@/components/LocationInput'
+import DayNotes from '@/components/DayNotes'
 
 // ─── Icon ─────────────────────────────────────────────────────────────────────
 
@@ -35,10 +36,15 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 // ─── Type config ──────────────────────────────────────────────────────────────
 
 const TYPE_CONFIG: Record<ItemType, { label: string; bg: string; text: string; icon: string }> = {
-  travel:    { label: 'Flight',    bg: 'bg-sky-100',    text: 'text-sky-600',    icon: 'flight' },
-  transport: { label: 'Transport', bg: 'bg-green-100',  text: 'text-green-600',  icon: 'train' },
-  activity:  { label: 'Activity',  bg: 'bg-amber-100',  text: 'text-amber-600',  icon: 'attractions' },
-  food:      { label: 'Food',      bg: 'bg-orange-100', text: 'text-orange-600', icon: 'restaurant' },
+  travel:    { label: 'Flight',         bg: 'bg-sky-100',     text: 'text-sky-600',     icon: 'flight' },
+  transport: { label: 'Transport',      bg: 'bg-green-100',   text: 'text-green-600',   icon: 'train' },
+  activity:  { label: 'Activity',       bg: 'bg-amber-100',   text: 'text-amber-600',   icon: 'attractions' },
+  food:      { label: 'Food',           bg: 'bg-orange-100',  text: 'text-orange-600',  icon: 'restaurant' },
+  photo:     { label: 'Photo/Scenic',   bg: 'bg-pink-100',    text: 'text-pink-600',    icon: 'photo_camera' },
+  museum:    { label: 'Museum/Gallery', bg: 'bg-purple-100',  text: 'text-purple-600',  icon: 'museum' },
+  shopping:  { label: 'Shopping',       bg: 'bg-rose-100',    text: 'text-rose-600',    icon: 'shopping_bag' },
+  markets:   { label: 'Markets',        bg: 'bg-lime-100',    text: 'text-lime-600',    icon: 'storefront' },
+  bakery:    { label: 'Bakery',         bg: 'bg-yellow-100',  text: 'text-yellow-700',  icon: 'bakery_dining' },
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -788,13 +794,14 @@ function SortableItem({ item, active, onClick }: {
 
 // ─── Day Drop Zone ────────────────────────────────────────────────────────────
 
-function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver, onAddAccom }: {
+function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver, onAddAccom, onNotesChange }: {
   day: Day; accom: Accommodation[]; items: Item[]
   selectedId: string | null
   onClickItem: (item: Item) => void
   onAdd: (type: ItemType) => void
   isOver: boolean
   onAddAccom: () => void
+  onNotesChange: (notes: string) => void
 }) {
   const { setNodeRef } = useDroppable({ id: day.id })
   const dayAccom = getAccomForDate(accom, day.date)
@@ -812,6 +819,16 @@ function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver
           </div>
         </div>
         {isOver && <span className="text-xs text-indigo-500 font-medium">Drop here</span>}
+      </div>
+
+      {/* Day notes — compact */}
+      <div className="mb-3">
+        <DayNotes
+          dayId={day.id}
+          initialNotes={day.notes ?? ''}
+          onChange={onNotesChange}
+          compact
+        />
       </div>
 
       <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
@@ -1074,6 +1091,10 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
     setSelectedItem(newItem)
   }
 
+  const handleDayNotesChange = (dayId: string, notes: string) => {
+    setDays((prev) => prev.map((d) => d.id === dayId ? { ...d, notes } : d))
+  }
+
   const handleTripSaved = (updated: Trip) => {
     setTrip(updated)
     setShowEdit(false)
@@ -1191,6 +1212,7 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
                       onAdd={(type) => handleAdd(day.id, type)}
                       isOver={overDayId === day.id}
                       onAddAccom={() => setAccomModal({ open: true, defaultDate: day.date })}
+                      onNotesChange={(notes) => handleDayNotesChange(day.id, notes)}
                     />
                   ))}
                 </div>
@@ -1233,6 +1255,17 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
                       selectedItemId={selectedItem?.id}
                       mode="day"
                       activeDayId={activeDay.id}
+                    />
+                  </div>
+                )}
+
+		{/* Day notes */}
+                {activeDay && (
+                  <div className="max-w-2xl mx-auto mb-4">
+                    <DayNotes
+                      dayId={activeDay.id}
+                      initialNotes={activeDay.notes ?? ''}
+                      onChange={(notes) => handleDayNotesChange(activeDay.id, notes)}
                     />
                   </div>
                 )}

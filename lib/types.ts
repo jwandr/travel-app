@@ -1,4 +1,4 @@
-export type ItemType = 'travel' | 'activity' | 'food' | 'transport'
+export type ItemType = 'travel' | 'activity' | 'food' | 'transport' | 'photo' | 'museum' | 'shopping' | 'markets' | 'bakery'
 
 export interface Trip {
   id: string
@@ -14,6 +14,7 @@ export interface Day {
   trip_id: string
   day_index: number
   date: string
+  notes?: string
   items: Item[]
 }
 
