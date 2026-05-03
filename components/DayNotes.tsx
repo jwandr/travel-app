@@ -13,12 +13,21 @@ interface DayNotesProps {
 export default function DayNotes({ dayId, initialNotes, onChange, compact = false }: DayNotesProps) {
   const [notes, setNotes] = useState(initialNotes)
   const [saving, setSaving] = useState(false)
-  const [expanded, setExpanded] = useState(false)
+  const [editing, setEditing] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     setNotes(initialNotes)
   }, [dayId])
+
+  // Auto-expand textarea height
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+    }
+  }, [notes, editing])
 
   const handleChange = (val: string) => {
     setNotes(val)
@@ -35,76 +44,100 @@ export default function DayNotes({ dayId, initialNotes, onChange, compact = fals
   }
 
   if (compact) {
-    // Overview mode — collapsed preview, expand on click
-    if (!notes && !expanded) {
+    if (!editing) {
       return (
         <button
-          onClick={() => setExpanded(true)}
-          className="w-full text-left text-xs text-gray-300 hover:text-gray-400 transition-colors py-1 flex items-center gap-1"
+          onClick={() => setEditing(true)}
+          className={`w-full text-left rounded-lg px-3 py-2 transition-colors border ${
+            notes
+              ? 'border-sky-100 bg-sky-50 hover:bg-sky-100'
+              : 'border-dashed border-gray-200 hover:border-sky-300'
+          }`}
         >
-          <span className="material-symbols-rounded" style={{ fontSize: 14 }}>edit_note</span>
-          Add day notes…
-        </button>
-      )
-    }
-
-    if (!expanded && notes) {
-      return (
-        <button
-          onClick={() => setExpanded(true)}
-          className="w-full text-left text-xs text-gray-500 hover:text-gray-700 transition-colors py-1 line-clamp-2 flex items-start gap-1"
-        >
-          <span className="material-symbols-rounded shrink-0 mt-0.5" style={{ fontSize: 14 }}>edit_note</span>
-          <span className="line-clamp-2">{notes}</span>
+          {notes ? (
+            <div className="flex items-start gap-1.5">
+              <span className="material-symbols-rounded text-sky-400 shrink-0 mt-0.5" style={{ fontSize: 14 }}>edit_note</span>
+              <span className="text-xs text-sky-800 line-clamp-2">{notes}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <span className="material-symbols-rounded text-gray-300" style={{ fontSize: 14 }}>edit_note</span>
+              <span className="text-xs text-gray-300">Add day notes…</span>
+            </div>
+          )}
         </button>
       )
     }
 
     return (
-      <div className="relative">
+      <div className="border-2 border-sky-300 rounded-xl bg-sky-50 p-3 shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-600 uppercase tracking-wide">
+            <span className="material-symbols-rounded" style={{ fontSize: 14 }}>edit_note</span>
+            Day Notes
+          </div>
+          <div className="flex items-center gap-2">
+            {saving && <span className="text-xs text-sky-400">Saving…</span>}
+            <button onClick={() => setEditing(false)} className="text-xs text-sky-500 hover:text-sky-700 font-medium">Done</button>
+          </div>
+        </div>
         <textarea
+          ref={textareaRef}
           value={notes}
           onChange={(e) => handleChange(e.target.value)}
-          onBlur={() => { if (!notes) setExpanded(false) }}
           autoFocus
-          rows={3}
-          placeholder="Add notes for this day…"
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sky-400 resize-none bg-white"
+          placeholder="Jot down plans, reminders or ideas for this day…"
+          className="w-full bg-transparent border-none outline-none text-xs text-sky-900 placeholder:text-sky-300 resize-none overflow-hidden"
+          style={{ minHeight: '60px' }}
         />
-        <div className="flex items-center justify-between mt-1">
-          {saving
-            ? <span className="text-xs text-gray-300">Saving…</span>
-            : <span className="text-xs text-green-500">{notes ? '✓ Saved' : ''}</span>
-          }
-          <button
-            onClick={() => setExpanded(false)}
-            className="text-xs text-gray-400 hover:text-gray-600"
-          >
-            Done
-          </button>
-        </div>
       </div>
     )
   }
 
-  // Full mode — always visible in day view
+  // Full mode — day view
   return (
-    <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 uppercase tracking-wide">
+    <div
+      onClick={() => !editing && setEditing(true)}
+      className={`rounded-xl transition-all cursor-text border-2 ${
+        editing
+          ? 'border-sky-300 bg-sky-50 shadow-sm p-4'
+          : notes
+            ? 'border-sky-100 bg-sky-50 hover:border-sky-200 p-4'
+            : 'border-dashed border-gray-200 hover:border-sky-300 px-3 py-2'
+      }`}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-600 uppercase tracking-wide">
           <span className="material-symbols-rounded" style={{ fontSize: 14 }}>edit_note</span>
-          Day Notes
+          {(editing || notes) ? 'Day Notes' : (
+            <span className="text-gray-300 font-normal normal-case tracking-normal">Add notes for this day…</span>
+          )}
         </div>
-        {saving && <span className="text-xs text-amber-400">Saving…</span>}
-        {!saving && notes && <span className="text-xs text-amber-400">✓ Saved</span>}
+        {editing && (
+          <div className="flex items-center gap-2">
+            {saving && <span className="text-xs text-sky-400">Saving…</span>}
+            {!saving && notes && <span className="text-xs text-sky-400">✓</span>}
+            <button
+              onClick={(e) => { e.stopPropagation(); setEditing(false) }}
+              className="text-xs text-sky-500 hover:text-sky-700 font-medium"
+            >
+              Done
+            </button>
+          </div>
+        )}
       </div>
-      <textarea
-        value={notes}
-        onChange={(e) => handleChange(e.target.value)}
-        rows={3}
-        placeholder="Jot down plans, reminders or ideas for this day…"
-        className="w-full bg-transparent border-none outline-none text-sm text-amber-900 placeholder:text-amber-300 resize-none"
-      />
+
+      {(editing || notes) && (
+        <textarea
+          ref={textareaRef}
+          value={notes}
+          onChange={(e) => handleChange(e.target.value)}
+          onFocus={() => setEditing(true)}
+          placeholder="Jot down plans, reminders or ideas…"
+          className="w-full bg-transparent border-none outline-none text-sm text-sky-900 placeholder:text-sky-300 resize-none overflow-hidden mt-1"
+          style={{ minHeight: '32px' }}
+        />
+      )}
     </div>
   )
 }

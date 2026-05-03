@@ -44,3 +44,12 @@ html, body {
 #__next {
   height: 100%;
 }
+
+/* Force dark text in inputs regardless of colour scheme / dark mode */
+input,
+textarea,
+select {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+  color-scheme: light;
+}

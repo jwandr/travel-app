@@ -441,6 +441,11 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
     setConfirmation(item.confirmation ?? '')
     setImageUrl(item.image_url ?? '')
     setNotes(item.notes ?? '')
+    useEffect(() => {
+    setSelectedItem(null)
+    setShowDayMap(false)
+    setMapExpanded(false)
+  }, [activeTabId])
   }, [item.id])
 
   const saveField = (fields: Partial<Item>) => {
@@ -732,7 +737,7 @@ function ItemCard({ item, active, onClick, dragHandle }: {
       }`}
       style={{ minHeight: item.image_url ? '72px' : undefined }}
     >
-      <div className="flex items-center gap-3 flex-1 min-w-0 p-3">
+      <div className="flex items-center gap-3 flex-1 min-w-0 p-3 pl-0">
         {dragHandle}
         <div className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center ${cfg.bg}`}>
           <Icon name={cfg.icon} className={cfg.text} />
@@ -767,7 +772,7 @@ function ItemCard({ item, active, onClick, dragHandle }: {
         )}
       </div>
       {item.image_url && (
-        <div className="hidden sm:block w-20 self-stretch shrink-0">
+        <div className="hidden sm:block w-32 self-stretch shrink-0">
           <img src={item.image_url} alt={item.title} className="w-full h-full object-cover"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
         </div>
@@ -787,13 +792,18 @@ function SortableItem({ item, active, onClick }: {
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0 : 1 }
 
   const handle = item.time_locked ? (
-    <div className="shrink-0 text-amber-400"><Icon name="lock" /></div>
+    <div className="flex items-center justify-center w-8 self-stretch shrink-0 text-amber-400">
+      <span className="material-symbols-rounded" style={{ fontSize: 18 }}>lock</span>
+    </div>
   ) : (
-    <button {...attributes} {...listeners}
-      className="shrink-0 text-gray-200 hover:text-gray-400 transition-colors cursor-grab active:cursor-grabbing touch-none"
-      onClick={(e) => e.stopPropagation()}>
-      <Icon name="drag_indicator" />
-    </button>
+    <div
+      {...attributes}
+      {...listeners}
+      className="flex items-center justify-center w-8 self-stretch shrink-0 text-gray-200 hover:text-gray-400 hover:bg-gray-50 transition-colors cursor-grab active:cursor-grabbing touch-none rounded-l-xl"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <span className="material-symbols-rounded" style={{ fontSize: 18 }}>drag_indicator</span>
+    </div>
   )
 
   return (
@@ -805,13 +815,14 @@ function SortableItem({ item, active, onClick }: {
 
 // ─── Day Drop Zone ────────────────────────────────────────────────────────────
 
-function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver, onAddAccom, onNotesChange }: {
+function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver, onAddAccom, onNotesChange, onEditAccom }: {
   day: Day; accom: Accommodation[]; items: Item[]
   selectedId: string | null
   onClickItem: (item: Item) => void
   onAdd: (type: ItemType) => void
   isOver: boolean
   onAddAccom: () => void
+  onEditAccom: () => void
   onNotesChange: (notes: string) => void
 }) {
   const { setNodeRef } = useDroppable({ id: day.id })
@@ -860,16 +871,24 @@ function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver
         <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Tonight's Stay</div>
         {dayAccom ? (
           <div className="flex items-center gap-2 bg-sky-50 border border-sky-100 rounded-xl px-3 py-2">
-            <Icon name="bed" className="text-sky-400 shrink-0 !text-base" />
+            <span className="material-symbols-rounded text-sky-400 shrink-0" style={{ fontSize: 16 }}>bed</span>
             <div className="flex-1 min-w-0">
               <span className="text-xs font-medium text-sky-800">{dayAccom.name}</span>
-              {dayAccom.address && <span className="text-xs text-sky-400 ml-1">· {dayAccom.address}</span>}
+              {dayAccom.address && (
+                <span className="text-xs text-sky-400 ml-1">· {dayAccom.address}</span>
+              )}
             </div>
+            <button
+              onClick={onEditAccom}
+              className="text-sky-400 hover:text-sky-600 transition-colors shrink-0"
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: 16 }}>edit</span>
+            </button>
           </div>
         ) : (
           <button onClick={onAddAccom}
             className="w-full flex items-center gap-2 px-3 py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs text-gray-400 hover:border-sky-300 hover:text-sky-500 transition-colors">
-            <Icon name="add" className="text-current !text-sm" /> Add accommodation
+            <span className="material-symbols-rounded" style={{ fontSize: 14 }}>add</span> Add accommodation
           </button>
         )}
       </div>
@@ -965,6 +984,7 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
   const [activeDragItem, setActiveDragItem] = useState<Item | null>(null)
   const [overDayId, setOverDayId] = useState<string | null>(null)
   const [showMap, setShowMap] = useState(false)
+  const [mapExpanded, setMapExpanded] = useState(false)
   const [showDayMap, setShowDayMap] = useState(false)
 
   const sensors = useSensors(
@@ -1223,6 +1243,10 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
                       onAdd={(type) => handleAdd(day.id, type)}
                       isOver={overDayId === day.id}
                       onAddAccom={() => setAccomModal({ open: true, defaultDate: day.date })}
+                      onEditAccom={() => {
+                        const existing = getAccomForDate(accom, day.date)
+                        setAccomModal({ open: true, accom: existing })
+                      }}
                       onNotesChange={(notes) => handleDayNotesChange(day.id, notes)}
                     />
                   ))}
@@ -1242,23 +1266,39 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
                     <p className="text-sm text-gray-400">
                       {new Date(activeDay.date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
-                    <button
-                      onClick={() => setShowDayMap((prev) => !prev)}
-                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                        showDayMap
-                          ? 'bg-sky-600 text-white'
-                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                      }`}
-                    >
-                      <span className="material-symbols-rounded" style={{ fontSize: 14 }}>map</span>
-                      {showDayMap ? 'Hide map' : 'Day map'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setShowDayMap((prev) => !prev)}
+                        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                          showDayMap
+                            ? 'bg-sky-600 text-white'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                      >
+                        <span className="material-symbols-rounded" style={{ fontSize: 14 }}>map</span>
+                        {showDayMap ? 'Hide map' : 'Day map'}
+                      </button>
+                      {showDayMap && (
+                        <button
+                          onClick={() => setMapExpanded((prev) => !prev)}
+                          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors bg-gray-100 text-gray-500 hover:bg-gray-200"
+                        >
+                          <span className="material-symbols-rounded" style={{ fontSize: 14 }}>
+                            {mapExpanded ? 'fullscreen_exit' : 'fullscreen'}
+                          </span>
+                          {mapExpanded ? 'Shrink' : 'Expand'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
 
 		{/* Day map */}
                 {showDayMap && activeDay && (
-                  <div className="max-w-2xl mx-auto mb-4 rounded-2xl overflow-hidden border border-gray-100 shadow-sm" style={{ height: '280px' }}>
+                  <div
+                    className="max-w-2xl mx-auto mb-4 rounded-2xl overflow-hidden border border-gray-100 shadow-sm transition-all"
+                    style={{ height: mapExpanded ? '520px' : '280px' }}
+                  >
                     <TripMapLoader
                       days={days}
                       accom={accom}
