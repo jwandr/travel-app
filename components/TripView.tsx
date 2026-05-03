@@ -22,6 +22,7 @@ import type { Trip, Day, Item, ItemType, Accommodation } from '@/lib/types'
 import type TripMap from './TripMap'
 import LocationInput from '@/components/LocationInput'
 import DayNotes from '@/components/DayNotes'
+import { buildTripExport } from '@/lib/export'
 
 // ─── Icon ─────────────────────────────────────────────────────────────────────
 
@@ -981,6 +982,7 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
   const [showMap, setShowMap] = useState(false)
   const [mapExpanded, setMapExpanded] = useState(false)
   const [showDayMap, setShowDayMap] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -1146,6 +1148,12 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
       updateItem(item.id, { sort_order: idx, start_time: item.start_time, end_time: item.end_time, duration_minutes: item.duration_minutes })
     ))
   }
+  const handleExport = async () => {
+    const text = buildTripExport(trip, days, accom)
+    await navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
 
   return (
     <AppShell>
@@ -1166,14 +1174,27 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
               </p>
             </div>
             <div className="flex items-center gap-2 ml-3 shrink-0">
+              <button
+                onClick={handleExport}
+                className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg transition-colors font-medium border ${
+                  copied
+                    ? 'bg-green-50 text-green-600 border-green-200'
+                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: 14 }}>
+                  {copied ? 'check' : 'content_copy'}
+                </span>
+                <span className="hidden sm:inline">{copied ? 'Copied!' : 'Export'}</span>
+              </button>
               <button onClick={() => setShowShare(true)}
-                className="flex items-center gap-1 text-xs bg-sky-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-sky-700 transition-colors font-medium">
-                <Icon name="group_add" className="text-white !text-base" />
+                className="flex items-center gap-1 text-xs bg-sky-600 hover:bg-sky-700 text-white px-2.5 py-1.5 rounded-lg transition-colors font-medium">
+                <span className="material-symbols-rounded" style={{ fontSize: 14 }}>group_add</span>
                 <span className="hidden sm:inline">Share</span>
               </button>
               <button onClick={() => router.push('/dashboard')}
                 className="text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1">
-                <Icon name="arrow_back" />
+                <span className="material-symbols-rounded" style={{ fontSize: 14 }}>arrow_back</span>
                 <span className="hidden sm:inline">Back</span>
               </button>
             </div>
