@@ -7,6 +7,7 @@ export interface Trip {
   duration_days: number
   created_by: string
   created_at: string
+  image_url?: string
 }
 
 export interface Day {

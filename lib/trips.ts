@@ -8,12 +8,13 @@ export async function createTrip(input: {
   start_date: string
   duration_days: number
   userId: string
+  image_url?: string
 }): Promise<Trip> {
   const { name, start_date, duration_days, userId } = input
 
   const { data: trip, error: tripError } = await supabase
     .from('trips')
-    .insert({ name, start_date, duration_days, created_by: userId })
+    .insert({ name, start_date, duration_days, created_by: userId, image_url: input.image_url })
     .select()
     .single()
   if (tripError) throw tripError
@@ -29,7 +30,7 @@ export async function createTrip(input: {
 
 export async function updateTrip(
   tripId: string,
-  updates: { name?: string; start_date?: string; duration_days?: number }
+  updates: { name?: string; start_date?: string; duration_days?: number; image_url?: string }
 ): Promise<Trip> {
   const { data: trip, error } = await supabase
     .from('trips')

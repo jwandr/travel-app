@@ -198,6 +198,7 @@ function EditTripModal({ trip, onSaved, onClose, onDeleted }: {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const datesChanged = startDate !== trip.start_date || duration !== trip.duration_days
+  const [imageUrl, setImageUrl] = useState(trip.image_url ?? '')
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -217,7 +218,12 @@ function EditTripModal({ trip, onSaved, onClose, onDeleted }: {
     if (duration < 1 || duration > 90) return setError('Duration must be 1–90 days.')
     setSaving(true)
     try {
-      const updated = await updateTrip(trip.id, { name: name.trim(), start_date: startDate, duration_days: duration })
+      const updated = await updateTrip(trip.id, {
+        name: name.trim(),
+        start_date: startDate,
+        duration_days: duration,
+        image_url: imageUrl.trim() || undefined,
+      })
       onSaved(updated)
     } catch (e: any) {
       setError(e.message ?? 'Something went wrong.')
@@ -249,6 +255,18 @@ function EditTripModal({ trip, onSaved, onClose, onDeleted }: {
             <input type="number" value={duration} min={1} max={90}
               onChange={(e) => setDuration(Number(e.target.value))}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
+          </div>
+	  <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cover image URL</label>
+            <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://… (optional)"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
+            {imageUrl && (
+              <div className="mt-2 rounded-lg overflow-hidden h-20 bg-gray-50">
+                <img src={imageUrl} alt="preview" className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              </div>
+            )}
           </div>
           {datesChanged && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">

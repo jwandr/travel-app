@@ -28,6 +28,7 @@ function CreateTripModal({ userId, onCreated, onClose }: {
   const [duration, setDuration] = useState(7)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
 
   const handleSubmit = async () => {
     if (!name.trim()) return setError('Please enter a trip name.')
@@ -36,7 +37,13 @@ function CreateTripModal({ userId, onCreated, onClose }: {
     setSaving(true)
     setError('')
     try {
-      const trip = await createTrip({ name: name.trim(), start_date: startDate, duration_days: duration, userId })
+      const trip = await createTrip({
+        name: name.trim(),
+        start_date: startDate,
+        duration_days: duration,
+        userId,
+        image_url: imageUrl.trim() || undefined,
+      })
       onCreated(trip)
     } catch (e: any) {
       setError(e.message ?? 'Something went wrong.')
@@ -70,6 +77,12 @@ function CreateTripModal({ userId, onCreated, onClose }: {
               onChange={(e) => setDuration(Number(e.target.value))}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
           </div>
+	  <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cover image URL</label>
+            <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://… (optional)"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
+          </div>
         </div>
         {error && <p className="text-sm text-red-500">{error}</p>}
         <div className="flex gap-3">
@@ -86,7 +99,6 @@ function CreateTripModal({ userId, onCreated, onClose }: {
     </div>
   )
 }
-
 function TripCard({ trip, onOpen, onDelete }: {
   trip: Trip & { is_owner: boolean }
   onOpen: () => void
@@ -102,20 +114,30 @@ function TripCard({ trip, onOpen, onDelete }: {
   }
 
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow group">
-      {/* Shared indicator */}
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-        trip.is_owner ? 'bg-sky-50' : 'bg-violet-50'
-      }`}>
-        <Icon
-          name={trip.is_owner ? 'luggage' : 'group'}
-          className={trip.is_owner ? 'text-sky-400' : 'text-violet-400'}
-        />
+    <div className="bg-white border border-gray-100 rounded-xl flex items-stretch shadow-sm hover:shadow-md transition-shadow group overflow-hidden">
+      {/* Cover image or icon */}
+      <div className="w-24 shrink-0 bg-sky-50 flex items-center justify-center">
+        {trip.image_url ? (
+          <img
+            src={trip.image_url}
+            alt={trip.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              const el = e.target as HTMLImageElement
+              el.style.display = 'none'
+              el.parentElement!.classList.add('flex', 'items-center', 'justify-center')
+              el.parentElement!.innerHTML = '<span class="material-symbols-rounded text-sky-300" style="font-size:28px">luggage</span>'
+            }}
+          />
+        ) : (
+          <span className="material-symbols-rounded text-sky-300" style={{ fontSize: 28 }}>luggage</span>
+        )}
       </div>
 
-      <button className="flex-1 text-left min-w-0" onClick={onOpen}>
+      {/* Content */}
+      <button className="flex-1 text-left px-4 py-4 min-w-0" onClick={onOpen}>
         <div className="flex items-center gap-2">
-          <div className="font-semibold text-gray-900 group-hover:text-sky-600 transition-colors truncate">
+          <div className={`font-semibold text-gray-900 group-hover:text-sky-600 transition-colors truncate`}>
             {trip.name}
           </div>
           {!trip.is_owner && (
@@ -129,21 +151,22 @@ function TripCard({ trip, onOpen, onDelete }: {
         </div>
       </button>
 
-      <div className="flex items-center gap-2 shrink-0">
+      {/* Delete */}
+      <div className="flex items-center pr-4">
         {trip.is_owner && (
           confirming ? (
-            <>
+            <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500">Delete?</span>
               <button onClick={handleDelete} disabled={deleting}
                 className="text-sm text-red-500 font-medium hover:text-red-700 disabled:opacity-50">
                 {deleting ? '…' : 'Yes'}
               </button>
               <button onClick={() => setConfirming(false)} className="text-sm text-gray-400 hover:text-gray-600">No</button>
-            </>
+            </div>
           ) : (
             <button onClick={() => setConfirming(true)}
               className="text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
-              <Icon name="delete" />
+              <span className="material-symbols-rounded" style={{ fontSize: 20 }}>delete</span>
             </button>
           )
         )}
