@@ -1,4 +1,4 @@
-export type ItemType = 'travel' | 'activity' | 'food' | 'transport' | 'photo' | 'museum' | 'shopping' | 'markets' | 'bakery'
+export type ItemType = 'flight' | 'activity' | 'food' | 'transport' | 'photo' | 'museum' | 'shopping' | 'markets' | 'bakery' | 'show'
 
 export interface Trip {
   id: string

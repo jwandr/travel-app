@@ -36,15 +36,16 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 // ─── Type config ──────────────────────────────────────────────────────────────
 
 const TYPE_CONFIG: Record<ItemType, { label: string; bg: string; text: string; icon: string }> = {
-  travel:    { label: 'Flight',         bg: 'bg-sky-100',     text: 'text-sky-600',     icon: 'flight' },
+  flight:    { label: 'Flight',         bg: 'bg-gray-100',    text: 'text-gray-700',    icon: 'flight' },
   transport: { label: 'Transport',      bg: 'bg-green-100',   text: 'text-green-600',   icon: 'train' },
   activity:  { label: 'Activity',       bg: 'bg-amber-100',   text: 'text-amber-600',   icon: 'attractions' },
-  food:      { label: 'Food',           bg: 'bg-orange-100',  text: 'text-orange-600',  icon: 'restaurant' },
-  photo:     { label: 'Photo/Scenic',   bg: 'bg-pink-100',    text: 'text-pink-600',    icon: 'photo_camera' },
-  museum:    { label: 'Museum/Gallery', bg: 'bg-purple-100',  text: 'text-purple-600',  icon: 'museum' },
-  shopping:  { label: 'Shopping',       bg: 'bg-rose-100',    text: 'text-rose-600',    icon: 'shopping_bag' },
+  food:      { label: 'Food',           bg: 'bg-purple-100',  text: 'text-purple-700',  icon: 'restaurant' },
+  photo:     { label: 'Photo/Scenic',   bg: 'bg-teal-100',    text: 'text-teal-600',    icon: 'photo_camera' },
+  museum:    { label: 'Museum/Gallery', bg: 'bg-yellow-100',  text: 'text-yellow-700',  icon: 'museum' },
+  shopping:  { label: 'Shopping',       bg: 'bg-blue-100',    text: 'text-blue-900',    icon: 'shopping_bag' },
   markets:   { label: 'Markets',        bg: 'bg-lime-100',    text: 'text-lime-600',    icon: 'storefront' },
-  bakery:    { label: 'Bakery',         bg: 'bg-yellow-100',  text: 'text-yellow-700',  icon: 'bakery_dining' },
+  bakery:    { label: 'Bakery',         bg: 'bg-orange-100',  text: 'text-orange-700',  icon: 'bakery_dining' },
+  show:      { label: 'Show',           bg: 'bg-rose-100',    text: 'text-rose-600',    icon: 'theater_comedy' },
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -603,7 +604,7 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
               </div>
             )}
 
-            {(item.type === 'travel' || item.type === 'transport') && (
+            {(item.type === 'flight' || item.type === 'transport') && (
               <div className="space-y-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">From</label>
@@ -896,7 +897,7 @@ function AddItemRow({ onAdd }: { onAdd: (type: ItemType) => void }) {
 function StatsBar({ trip, days }: { trip: Trip; days: Day[] }) {
   const stats = [
     { icon: 'calendar_month', value: trip.duration_days,            label: 'Days' },
-    { icon: 'flight',         value: countByType(days, 'travel'),    label: 'Flights' },
+    { icon: 'flight',         value: countByType(days, 'flight'),    label: 'Flights' },
     { icon: 'attractions',    value: countByType(days, 'activity'),  label: 'Activities' },
     { icon: 'restaurant',     value: countByType(days, 'food'),      label: 'Dining' },
     { icon: 'train',          value: countByType(days, 'transport'), label: 'Transport' },
