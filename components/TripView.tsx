@@ -37,7 +37,7 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 
 const TYPE_CONFIG: Record<ItemType, { label: string; bg: string; text: string; icon: string }> = {
   flight:    { label: 'Flight',         bg: 'bg-gray-100',    text: 'text-gray-700',    icon: 'flight' },
-  transport: { label: 'Transport',      bg: 'bg-green-100',   text: 'text-green-600',   icon: 'train' },
+  transport: { label: 'Transport',      bg: 'bg-gray-100',    text: 'text-gray-700',    icon: 'train' },
   activity:  { label: 'Activity',       bg: 'bg-amber-100',   text: 'text-amber-600',   icon: 'attractions' },
   food:      { label: 'Food',           bg: 'bg-purple-100',  text: 'text-purple-700',  icon: 'restaurant' },
   photo:     { label: 'Photo/Scenic',   bg: 'bg-teal-100',    text: 'text-teal-600',    icon: 'photo_camera' },
