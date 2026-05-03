@@ -441,11 +441,6 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
     setConfirmation(item.confirmation ?? '')
     setImageUrl(item.image_url ?? '')
     setNotes(item.notes ?? '')
-    useEffect(() => {
-    setSelectedItem(null)
-    setShowDayMap(false)
-    setMapExpanded(false)
-  }, [activeTabId])
   }, [item.id])
 
   const saveField = (fields: Partial<Item>) => {
@@ -1133,6 +1128,12 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
       window.location.reload()
     }
   }
+
+  useEffect(() => {
+    setSelectedItem(null)
+    setShowDayMap(false)
+    setMapExpanded(false)
+  }, [activeTabId])
 
   const cascadeDayFromItem = async (updatedItem: Item) => {
     const day = days.find((d) => d.items.some((i) => i.id === updatedItem.id))
