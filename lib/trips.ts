@@ -403,12 +403,13 @@ export async function getUserTrips(userId: string): Promise<(Trip & { is_owner: 
     .from('trip_members')
     .select('role, trips(*)')
     .eq('user_id', userId)
-    .order('start_date', { referencedTable: 'trips', ascending: true })
 
   if (error) throw error
 
-  return (data ?? []).map((row: any) => ({
-    ...row.trips,
-    is_owner: row.role === 'owner',
-  }))
+  return (data ?? [])
+    .map((row: any) => ({
+      ...row.trips,
+      is_owner: row.role === 'owner',
+    }))
+    .sort((a: Trip, b: Trip) => a.start_date.localeCompare(b.start_date))
 }
