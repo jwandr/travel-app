@@ -152,6 +152,23 @@ function TripCard({ trip, onOpen, onDelete }: {
   )
 }
 
+function groupTripsByMonth(trips: (Trip & { is_owner: boolean })[]) {
+  const groups: { label: string; trips: (Trip & { is_owner: boolean })[] }[] = []
+
+  for (const trip of trips) {
+    const date = new Date(trip.start_date)
+    const label = date.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })
+    const existing = groups.find((g) => g.label === label)
+    if (existing) {
+      existing.trips.push(trip)
+    } else {
+      groups.push({ label, trips: [trip] })
+    }
+  }
+
+  return groups
+}
+
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
   const [trips, setTrips] = useState<(Trip & { is_owner: boolean })[]>([])
@@ -195,44 +212,68 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+          ) : trips.length === 0 ? (
+            <div className="text-center py-24 text-gray-400">
+              <span className="material-symbols-rounded text-gray-200 block mx-auto mb-4" style={{ fontSize: 48 }}>luggage</span>
+              <p className="text-sm">No trips yet. Create your first one!</p>
+            </div>
           ) : (
             <>
-              {myTrips.length === 0 && sharedTrips.length === 0 && (
-                <div className="text-center py-24 text-gray-400">
-                  <Icon name="luggage" className="text-gray-200 !text-5xl block mx-auto mb-4" />
-                  <p className="text-sm">No trips yet. Create your first one!</p>
-                </div>
-              )}
-
+              {/* My trips — grouped by month */}
               {myTrips.length > 0 && (
-                <div className="space-y-3">
-                  {myTrips.map((trip) => (
-                    <TripCard
-                      key={trip.id}
-                      trip={trip}
-                      onOpen={() => router.push(`/trip/${trip.id}`)}
-                      onDelete={() => setTrips((prev) => prev.filter((t) => t.id !== trip.id))}
-                    />
+                <div className="space-y-6">
+                  {groupTripsByMonth(myTrips).map((group) => (
+                    <div key={group.label}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                          {group.label}
+                        </span>
+                        <div className="flex-1 h-px bg-gray-100" />
+                      </div>
+                      <div className="space-y-3">
+                        {group.trips.map((trip) => (
+                          <TripCard
+                            key={trip.id}
+                            trip={trip}
+                            onOpen={() => router.push(`/trip/${trip.id}`)}
+                            onDelete={() => setTrips((prev) => prev.filter((t) => t.id !== trip.id))}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
 
+              {/* Shared trips — also grouped by month */}
               {sharedTrips.length > 0 && (
                 <>
-                  <div className="flex items-center gap-3">
-                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                  <div className="flex items-center gap-3 mt-6">
+                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
                       Shared with me
-                    </div>
+                    </span>
                     <div className="flex-1 h-px bg-gray-100" />
                   </div>
-                  <div className="space-y-3">
-                    {sharedTrips.map((trip) => (
-                      <TripCard
-                        key={trip.id}
-                        trip={trip}
-                        onOpen={() => router.push(`/trip/${trip.id}`)}
-                        onDelete={() => {}}
-                      />
+                  <div className="space-y-6 mt-3">
+                    {groupTripsByMonth(sharedTrips).map((group) => (
+                      <div key={group.label}>
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                            {group.label}
+                          </span>
+                          <div className="flex-1 h-px bg-gray-100" />
+                        </div>
+                        <div className="space-y-3">
+                          {group.trips.map((trip) => (
+                            <TripCard
+                              key={trip.id}
+                              trip={trip}
+                              onOpen={() => router.push(`/trip/${trip.id}`)}
+                              onDelete={() => {}}
+                            />
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </>
