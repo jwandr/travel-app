@@ -116,7 +116,10 @@ function TripCard({ trip, onOpen, onDelete }: {
   return (
     <div className="bg-white border border-gray-100 rounded-xl flex items-stretch shadow-sm hover:shadow-md transition-shadow group overflow-hidden">
       {/* Cover image or icon */}
-      <div className="w-24 shrink-0 bg-sky-50 flex items-center justify-center">
+      <div
+        onClick={onOpen}
+        className="w-24 shrink-0 bg-sky-50 flex items-center justify-center cursor-pointer"
+      >
         {trip.image_url ? (
           <img
             src={trip.image_url}

@@ -597,12 +597,6 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
               <input type="text" value={imageUrl} placeholder="https://…"
                 onChange={(e) => setImageUrl(e.target.value)} onBlur={(e) => saveField({ image_url: e.target.value || undefined })}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
-              {imageUrl && (
-                <div className="mt-2 rounded-lg overflow-hidden h-24 bg-gray-50">
-                  <img src={imageUrl} alt="preview" className="w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                </div>
-              )}
             </div>
 	    {/* Location — flights and transport get from/to, everything else gets a single location */}
             {(item.type === 'flight' || item.type === 'transport') ? (
@@ -614,9 +608,9 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
                     placeholder="Departure location"
                     onChange={async (val, lat, lng) => {
                       const updated = await updateItem(item.id, {
-                        location_from: val,
-                        location_from_lat: lat,
-                        location_from_lng: lng,
+                        location_from: val || undefined,
+                        location_from_lat: val ? lat : undefined,
+                        location_from_lng: val ? lng : undefined,
                       })
                       onChange(updated)
                     }}
@@ -629,9 +623,9 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
                     placeholder="Arrival location"
                     onChange={async (val, lat, lng) => {
                       const updated = await updateItem(item.id, {
-                        location_to: val,
-                        location_to_lat: lat,
-                        location_to_lng: lng,
+                        location_to: val || undefined,
+                        location_to_lat: val ? lat : undefined,
+                        location_to_lng: val ? lng : undefined,
                       })
                       onChange(updated)
                     }}
@@ -645,9 +639,9 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
                   value={item.location ?? ''}
                   onChange={async (val, lat, lng) => {
                     const updated = await updateItem(item.id, {
-                      location: val,
-                      location_lat: lat,
-                      location_lng: lng,
+                      location: val || undefined,
+                      location_lat: val ? lat : undefined,
+                      location_lng: val ? lng : undefined,
                     })
                     onChange(updated)
                   }}

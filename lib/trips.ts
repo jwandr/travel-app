@@ -85,14 +85,60 @@ export async function addItem(
   tripId: string,
   type: Item['type'] = 'activity'
 ): Promise<Item> {
+  // Find the latest end time already on this day
   const { data: existing } = await supabase
     .from('items')
-    .select('sort_order')
+    .select('sort_order, end_time, start_time')
     .eq('day_id', dayId)
     .order('sort_order', { ascending: false })
-    .limit(1)
 
-  const nextOrder = existing && existing.length > 0 ? existing[0].sort_order + 1 : 0
+  const nextOrder = existing && existing.length > 0
+    ? existing[0].sort_order + 1
+    : 0
+
+  // Find the latest end time among all items on the day
+  let startMinutes = 9 * 60 // default 09:00
+  if (existing && existing.length > 0) {
+    const latestEnd = existing
+      .map((i) => {
+        if (i.end_time) {
+          const [h, m] = i.end_time.split(':').map(Number)
+          return h * 60 + m
+        }
+        if (i.start_time) {
+          const [h, m] = i.start_time.split(':').map(Number)
+          return h * 60 + m + 60 // assume 1hr if no end time
+        }
+        return 0
+      })
+      .reduce((max, t) => Math.max(max, t), 0)
+
+    if (latestEnd > 0) {
+      // If latest end is past 23:00, work backwards — place 1hr before the earliest item
+      if (latestEnd >= 23 * 60) {
+        const earliest = existing
+          .map((i) => {
+            if (i.start_time) {
+              const [h, m] = i.start_time.split(':').map(Number)
+              return h * 60 + m
+            }
+            return 9 * 60
+          })
+          .reduce((min, t) => Math.min(min, t), 24 * 60)
+        startMinutes = Math.max(0, earliest - 60)
+      } else {
+        startMinutes = latestEnd
+      }
+    }
+  }
+
+  const endMinutes = Math.min(startMinutes + 60, 23 * 60 + 59)
+
+  const toTime = (mins: number) => {
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  }
 
   const { data, error } = await supabase
     .from('items')
@@ -101,13 +147,14 @@ export async function addItem(
       day_id: dayId,
       type,
       title: '',
-      start_time: '09:00',
-      end_time: '10:00',
-      duration_minutes: 60,
+      start_time: toTime(startMinutes),
+      end_time: toTime(endMinutes),
+      duration_minutes: endMinutes - startMinutes,
       sort_order: nextOrder,
     })
     .select()
     .single()
+
   if (error) throw error
   return data
 }
