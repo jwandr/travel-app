@@ -237,18 +237,18 @@ function EditTripModal({ trip, onSaved, onClose, onDeleted }: {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Trip name</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} autoFocus
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Start date</label>
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Duration (days)</label>
             <input type="number" value={duration} min={1} max={90}
               onChange={(e) => setDuration(Number(e.target.value))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
           </div>
           {datesChanged && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
@@ -259,7 +259,7 @@ function EditTripModal({ trip, onSaved, onClose, onDeleted }: {
         {error && <p className="text-sm text-red-500">{error}</p>}
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 rounded-lg py-2 text-sm font-medium hover:bg-gray-50">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="flex-1 bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+          <button onClick={handleSave} disabled={saving} className="flex-1 bg-sky-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-sky-700 disabled:opacity-50">
             {saving ? 'Saving…' : 'Save changes'}
           </button>
         </div>
@@ -345,23 +345,23 @@ function AccomModal({ tripId, accom, tripStart, tripEnd, onSaved, onClose }: {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Property name</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} autoFocus placeholder="e.g. Hotel Kanra Kyoto"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
             <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Kyoto"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
           </div>
           <div className="flex gap-2">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
               <input type="date" value={checkIn} min={tripStart} max={tripEnd} onChange={(e) => setCheckIn(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
               <input type="date" value={checkOut} min={tripStart} max={tripEnd} onChange={(e) => setCheckOut(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
             </div>
           </div>
           <div>
@@ -373,13 +373,13 @@ function AccomModal({ tripId, accom, tripStart, tripEnd, onSaved, onClose }: {
               </button>
             </div>
             <input type="text" value={confirmation} onChange={(e) => setConfirmation(e.target.value)} placeholder="e.g. Booking ref #123"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
           </div>
         </div>
         {error && <p className="text-sm text-red-500">{error}</p>}
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 rounded-lg py-2 text-sm font-medium hover:bg-gray-50">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="flex-1 bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+          <button onClick={handleSave} disabled={saving} className="flex-1 bg-sky-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-sky-700 disabled:opacity-50">
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -501,7 +501,7 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
         {(['details', 'notes'] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`py-3 mr-5 text-sm font-medium border-b-2 transition-colors capitalize ${
-              tab === t ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'
+              tab === t ? 'border-sky-600 text-sky-600' : 'border-transparent text-gray-400 hover:text-gray-600'
             }`}>
             {t}
           </button>
@@ -515,13 +515,13 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Title</label>
               <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={(e) => saveField({ title: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Subtitle</label>
               <input type="text" value={subtitle} placeholder="e.g. Terminal 3 · Gate 22"
                 onChange={(e) => setSubtitle(e.target.value)} onBlur={(e) => saveField({ subtitle: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Duration</label>
@@ -529,13 +529,13 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
                 <div className="flex-1 flex items-center gap-1">
                   <input type="number" min={0} max={23} value={durationHours}
                     onChange={(e) => setDurationHours(Number(e.target.value))} onBlur={handleDurationBlur}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
                   <span className="text-xs text-gray-400 shrink-0">hr</span>
                 </div>
                 <div className="flex-1 flex items-center gap-1">
                   <input type="number" min={0} max={59} value={durationMins}
                     onChange={(e) => setDurationMins(Number(e.target.value))} onBlur={handleDurationBlur}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
                   <span className="text-xs text-gray-400 shrink-0">min</span>
                 </div>
               </div>
@@ -544,12 +544,12 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
               <div className="flex-1">
                 <label className="block text-xs font-medium text-gray-500 mb-1">Start time</label>
                 <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} onBlur={(e) => handleStartTimeBlur(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
               </div>
               <div className="flex-1">
                 <label className="block text-xs font-medium text-gray-500 mb-1">End time</label>
                 <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} onBlur={(e) => handleEndTimeBlur(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
               </div>
             </div>
             <div className="flex items-center justify-between py-1">
@@ -572,13 +572,13 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
               </div>
               <input type="text" value={confirmation} placeholder="e.g. PNR: ABC123"
                 onChange={(e) => setConfirmation(e.target.value)} onBlur={(e) => saveField({ confirmation: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Image URL</label>
               <input type="text" value={imageUrl} placeholder="https://…"
                 onChange={(e) => setImageUrl(e.target.value)} onBlur={(e) => saveField({ image_url: e.target.value || undefined })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
               {imageUrl && (
                 <div className="mt-2 rounded-lg overflow-hidden h-24 bg-gray-50">
                   <img src={imageUrl} alt="preview" className="w-full h-full object-cover"
@@ -656,7 +656,7 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
             <label className="block text-xs font-medium text-gray-500 mb-1">Notes</label>
             <textarea value={notes} rows={8} placeholder="Add any notes here…"
               onChange={(e) => setNotes(e.target.value)} onBlur={(e) => saveField({ notes: e.target.value })}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 resize-none" />
           </div>
         )}
       </div>
@@ -716,7 +716,7 @@ function ItemCard({ item, active, onClick, dragHandle }: {
     <div
       onClick={onClick}
       className={`flex items-center rounded-xl border cursor-pointer transition-all overflow-hidden ${
-        active ? 'border-indigo-200 bg-indigo-50/50 shadow-sm' : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
+        active ? 'border-sky-200 bg-sky-50/50 shadow-sm' : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
       }`}
       style={{ minHeight: item.image_url ? '72px' : undefined }}
     >
@@ -807,9 +807,9 @@ function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver
   const d = new Date(day.date)
 
   return (
-    <div className={`rounded-2xl border-2 transition-colors p-4 ${isOver ? 'border-indigo-300 bg-indigo-50/40' : 'border-transparent'}`}>
+    <div className={`rounded-2xl border-2 transition-colors p-4 ${isOver ? 'border-sky-300 bg-sky-50/40' : 'border-transparent'}`}>
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
+        <div className="w-7 h-7 rounded-full bg-sky-600 flex items-center justify-center shrink-0">
           <span className="text-xs font-bold text-white">{day.day_index}</span>
         </div>
         <div className="flex-1">
@@ -817,7 +817,7 @@ function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver
             {d.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
         </div>
-        {isOver && <span className="text-xs text-indigo-500 font-medium">Drop here</span>}
+        {isOver && <span className="text-xs text-sky-500 font-medium">Drop here</span>}
       </div>
 
       {/* Day notes — compact */}
@@ -831,9 +831,9 @@ function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver
       </div>
 
       <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-        <div ref={setNodeRef} className={`space-y-2 min-h-[56px] rounded-xl transition-colors ${isOver && items.length === 0 ? 'bg-indigo-50 border-2 border-dashed border-indigo-200' : ''}`}>
+        <div ref={setNodeRef} className={`space-y-2 min-h-[56px] rounded-xl transition-colors ${isOver && items.length === 0 ? 'bg-sky-50 border-2 border-dashed border-sky-200' : ''}`}>
           {items.length === 0 && isOver && (
-            <div className="flex items-center justify-center h-14 text-xs text-indigo-400 font-medium">Drop here</div>
+            <div className="flex items-center justify-center h-14 text-xs text-sky-400 font-medium">Drop here</div>
           )}
           {items.map((item) => (
             <SortableItem key={item.id} item={item} active={selectedId === item.id} onClick={() => onClickItem(item)} />
@@ -847,16 +847,16 @@ function DayDropZone({ day, accom, items, selectedId, onClickItem, onAdd, isOver
       <div className="mt-4 pt-3 border-t border-gray-100">
         <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Tonight's Stay</div>
         {dayAccom ? (
-          <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
-            <Icon name="bed" className="text-indigo-400 shrink-0 !text-base" />
+          <div className="flex items-center gap-2 bg-sky-50 border border-sky-100 rounded-xl px-3 py-2">
+            <Icon name="bed" className="text-sky-400 shrink-0 !text-base" />
             <div className="flex-1 min-w-0">
-              <span className="text-xs font-medium text-indigo-800">{dayAccom.name}</span>
-              {dayAccom.address && <span className="text-xs text-indigo-400 ml-1">· {dayAccom.address}</span>}
+              <span className="text-xs font-medium text-sky-800">{dayAccom.name}</span>
+              {dayAccom.address && <span className="text-xs text-sky-400 ml-1">· {dayAccom.address}</span>}
             </div>
           </div>
         ) : (
           <button onClick={onAddAccom}
-            className="w-full flex items-center gap-2 px-3 py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs text-gray-400 hover:border-indigo-300 hover:text-indigo-500 transition-colors">
+            className="w-full flex items-center gap-2 px-3 py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs text-gray-400 hover:border-sky-300 hover:text-sky-500 transition-colors">
             <Icon name="add" className="text-current !text-sm" /> Add accommodation
           </button>
         )}
@@ -872,7 +872,7 @@ function AddItemRow({ onAdd }: { onAdd: (type: ItemType) => void }) {
   return (
     <div className="relative mt-2">
       <button onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:border-indigo-300 hover:text-indigo-500 transition-colors">
+        className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:border-sky-300 hover:text-sky-500 transition-colors">
         <Icon name="add" className="text-current" /> Add item
       </button>
       {open && (
@@ -904,7 +904,7 @@ function StatsBar({ trip, days }: { trip: Trip; days: Day[] }) {
     <div className="border-t border-gray-100 bg-white px-4 py-2 flex items-center gap-4 shrink-0 overflow-x-auto">
       {stats.map((s) => (
         <div key={s.label} className="flex items-center gap-2 shrink-0">
-          <Icon name={s.icon} className="text-indigo-400 !text-lg" />
+          <Icon name={s.icon} className="text-sky-400 !text-lg" />
           <div>
             <div className="text-sm font-bold text-gray-900 leading-none">{s.value}</div>
             <div className="text-xs text-gray-400 mt-0.5">{s.label}</div>
@@ -1134,7 +1134,7 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
             </div>
             <div className="flex items-center gap-2 ml-3 shrink-0">
               <button onClick={() => setShowShare(true)}
-                className="flex items-center gap-1 text-xs bg-indigo-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                className="flex items-center gap-1 text-xs bg-sky-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-sky-700 transition-colors font-medium">
                 <Icon name="group_add" className="text-white !text-base" />
                 <span className="hidden sm:inline">Share</span>
               </button>
@@ -1151,9 +1151,9 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
             <div className="flex gap-1" style={{ width: 'max-content' }}>
               <button onClick={() => setActiveTabId(OVERVIEW_ID)}
                 className={`flex flex-col items-center px-3 py-2 rounded-xl text-xs shrink-0 transition-colors border ${
-                  isOverview ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-transparent text-gray-400 hover:bg-gray-50'
+                  isOverview ? 'border-sky-200 bg-sky-50 text-sky-700' : 'border-transparent text-gray-400 hover:bg-gray-50'
                 }`} style={{ minWidth: '80px' }}>
-                <span className={`font-semibold text-sm ${isOverview ? 'text-indigo-700' : 'text-gray-700'}`}>Overview</span>
+                <span className={`font-semibold text-sm ${isOverview ? 'text-sky-700' : 'text-gray-700'}`}>Overview</span>
                 <span>All days</span>
               </button>
 
@@ -1163,12 +1163,12 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
                 return (
                   <button key={day.id} onClick={() => setActiveTabId(day.id)}
                     className={`flex flex-col items-center px-3 py-2 rounded-xl text-xs shrink-0 transition-colors border ${
-                      active ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-transparent text-gray-400 hover:bg-gray-50'
+                      active ? 'border-sky-200 bg-sky-50 text-sky-700' : 'border-transparent text-gray-400 hover:bg-gray-50'
                     }`} style={{ minWidth: '80px' }}>
-                    <span className={`font-semibold text-sm ${active ? 'text-indigo-700' : 'text-gray-700'}`}>
+                    <span className={`font-semibold text-sm ${active ? 'text-sky-700' : 'text-gray-700'}`}>
                       {d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
                     </span>
-                    <span className={active ? 'text-indigo-400' : 'text-gray-400'}>
+                    <span className={active ? 'text-sky-400' : 'text-gray-400'}>
                       {d.toLocaleDateString('en-AU', { weekday: 'short' })} · Day {day.day_index}
                     </span>
                   </button>
@@ -1176,9 +1176,9 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
               })}
 	      <button onClick={() => setActiveTabId(MAP_TAB)}
                 className={`flex flex-col items-center px-3 py-2 rounded-xl text-xs shrink-0 transition-colors border ${
-                  activeTabId === MAP_TAB ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-transparent text-gray-400 hover:bg-gray-50'
+                  activeTabId === MAP_TAB ? 'border-sky-200 bg-sky-50 text-sky-700' : 'border-transparent text-gray-400 hover:bg-gray-50'
                 }`} style={{ minWidth: '80px' }}>
-                <span className={`font-semibold text-sm ${activeTabId === MAP_TAB ? 'text-indigo-700' : 'text-gray-700'}`}>Map</span>
+                <span className={`font-semibold text-sm ${activeTabId === MAP_TAB ? 'text-sky-700' : 'text-gray-700'}`}>Map</span>
                 <span>All stops</span>
               </button>
             </div>
@@ -1234,7 +1234,7 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
                       onClick={() => setShowDayMap((prev) => !prev)}
                       className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
                         showDayMap
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-sky-600 text-white'
                           : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                       }`}
                     >
@@ -1303,11 +1303,11 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
                     <div className="flex-1 h-px bg-gray-100" />
                   </div>
                   {todayAccom ? (
-                    <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
-                      <Icon name="bed" className="text-indigo-400 shrink-0" />
+                    <div className="flex items-center gap-3 bg-sky-50 border border-sky-100 rounded-xl px-4 py-3">
+                      <Icon name="bed" className="text-sky-400 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-indigo-900">{todayAccom.name}</div>
-                        {todayAccom.address && <div className="text-xs text-indigo-400 mt-0.5">{todayAccom.address}</div>}
+                        <div className="text-sm font-semibold text-sky-900">{todayAccom.name}</div>
+                        {todayAccom.address && <div className="text-xs text-sky-400 mt-0.5">{todayAccom.address}</div>}
                         {todayAccom.confirmed && (
                           <div className="text-xs text-green-600 mt-0.5 flex items-center gap-1">
                             <Icon name="check_circle" className="text-green-500 !text-xs" />
@@ -1316,13 +1316,13 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
                         )}
                       </div>
                       <button onClick={() => setAccomModal({ open: true, accom: todayAccom })}
-                        className="text-indigo-400 hover:text-indigo-600 shrink-0">
+                        className="text-sky-400 hover:text-sky-600 shrink-0">
                         <Icon name="edit" />
                       </button>
                     </div>
                   ) : (
                     <button onClick={() => setAccomModal({ open: true })}
-                      className="w-full flex items-center gap-2 px-4 py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:border-indigo-300 hover:text-indigo-500 transition-colors">
+                      className="w-full flex items-center gap-2 px-4 py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:border-sky-300 hover:text-sky-500 transition-colors">
                       <Icon name="bed" className="text-current" /> Add accommodation for this night
                     </button>
                   )}

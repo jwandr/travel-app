@@ -101,12 +101,12 @@ export default function ShareModal({ trip, userId, userEmail, onClose }: {
               onChange={(e) => { setEmail(e.target.value); setError('') }}
               onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
               placeholder="Email address"
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
             />
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as 'editor' | 'viewer')}
-              className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
             >
               <option value="editor">Editor</option>
               <option value="viewer">Viewer</option>
@@ -115,7 +115,7 @@ export default function ShareModal({ trip, userId, userEmail, onClose }: {
           <button
             onClick={handleInvite}
             disabled={sending}
-            className="w-full bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full bg-sky-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-sky-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <Icon name="send" className="text-white !text-base" />
             {sending ? 'Sending invite…' : 'Send invite'}

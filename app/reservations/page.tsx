@@ -16,7 +16,7 @@ const TYPE_CONFIG: Record<string, { label: string; icon: string; bg: string; tex
   transport:     { label: 'Transport',     icon: 'train',               bg: 'bg-green-100',  text: 'text-green-600' },
   activity:      { label: 'Activity',      icon: 'attractions',         bg: 'bg-amber-100',  text: 'text-amber-600' },
   food:          { label: 'Food',          icon: 'restaurant',          bg: 'bg-orange-100', text: 'text-orange-600' },
-  accommodation: { label: 'Accommodation', icon: 'bed',                 bg: 'bg-indigo-100', text: 'text-indigo-600' },
+  accommodation: { label: 'Accommodation', icon: 'bed',                 bg: 'bg-sky-100', text: 'text-sky-600' },
 }
 
 type Reservation = Item & { day_date: string; trip_name: string }
@@ -68,7 +68,7 @@ function DetailPanel({ item, onClose, onChange, onDelete }: {
           <input type="text" value={title}
             onChange={(e) => setTitle(e.target.value)}
             onBlur={(e) => save({ title: e.target.value })}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Trip</label>
@@ -95,14 +95,14 @@ function DetailPanel({ item, onClose, onChange, onDelete }: {
           <input type="text" value={confirmation} placeholder="e.g. PNR: ABC123"
             onChange={(e) => setConfirmation(e.target.value)}
             onBlur={(e) => save({ confirmation: e.target.value })}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Notes</label>
           <textarea value={notes} rows={5} placeholder="Add notes…"
             onChange={(e) => setNotes(e.target.value)}
             onBlur={(e) => save({ notes: e.target.value })}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 resize-none" />
         </div>
       </div>
 
@@ -232,7 +232,7 @@ useEffect(() => {
                           <div key={item.id} onClick={() => setSelected(active ? null : item)}
                             className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
                               active
-                                ? 'border-indigo-200 bg-indigo-50/50 shadow-sm'
+                                ? 'border-sky-200 bg-sky-50/50 shadow-sm'
                                 : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
                             }`}>
                             <div className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center ${cfg.bg}`}>

@@ -403,7 +403,7 @@ export async function getUserTrips(userId: string): Promise<(Trip & { is_owner: 
     .from('trip_members')
     .select('role, trips(*)')
     .eq('user_id', userId)
-    .order('created_at', { referencedTable: 'trips', ascending: false })
+    .order('start_date', { referencedTable: 'trips', ascending: true })
 
   if (error) throw error
 

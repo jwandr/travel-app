@@ -69,7 +69,7 @@ export default function DayNotes({ dayId, initialNotes, onChange, compact = fals
           autoFocus
           rows={3}
           placeholder="Add notes for this day…"
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-white"
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sky-400 resize-none bg-white"
         />
         <div className="flex items-center justify-between mt-1">
           {saving

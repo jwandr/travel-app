@@ -63,7 +63,7 @@ export default function LoginPage() {
             </p>
             <button
               onClick={() => { setSent(false); setEmail('') }}
-              className="text-xs text-indigo-500 hover:text-indigo-700 transition-colors"
+              className="text-xs text-sky-500 hover:text-sky-700 transition-colors"
             >
               Use a different email
             </button>
@@ -80,7 +80,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && signIn()}
                 placeholder="you@example.com"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
                 autoFocus
               />
             </div>
@@ -92,7 +92,7 @@ export default function LoginPage() {
             <button
               onClick={signIn}
               disabled={loading || !email.trim()}
-              className="w-full bg-indigo-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              className="w-full bg-sky-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-sky-700 transition-colors disabled:opacity-50"
             >
               {loading ? 'Sending…' : 'Send magic link'}
             </button>

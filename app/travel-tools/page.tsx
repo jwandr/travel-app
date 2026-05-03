@@ -52,19 +52,19 @@ function ToolModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
             <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus
               placeholder="e.g. Google Flights"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">URL</label>
             <input type="text" value={url} onChange={(e) => setUrl(e.target.value)}
               placeholder="e.g. flights.google.com"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)}
               rows={3} placeholder="What is this tool for?"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 resize-none" />
           </div>
         </div>
         {error && <p className="text-sm text-red-500">{error}</p>}
@@ -74,7 +74,7 @@ function ToolModal({
             Cancel
           </button>
           <button onClick={handleSave} disabled={saving}
-            className="flex-1 bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+            className="flex-1 bg-sky-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-sky-700 disabled:opacity-50">
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -125,7 +125,7 @@ export default function TravelToolsPage() {
               <p className="text-sm text-gray-400 mt-0.5">Your favourite planning resources</p>
             </div>
             <button onClick={() => setModal({ open: true })}
-              className="bg-indigo-600 text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2">
+              className="bg-sky-600 text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-sky-700 transition-colors flex items-center gap-2">
               <Icon name="add" className="text-white" /> Add Tool
             </button>
           </div>
@@ -149,15 +149,15 @@ export default function TravelToolsPage() {
               {tools.map((tool) => (
                 <div key={tool.id}
                   className="bg-white border border-gray-100 rounded-xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow group">
-                  <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0">
-                    <Icon name="link" className="text-indigo-400" />
+                  <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center shrink-0">
+                    <Icon name="link" className="text-sky-400" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-gray-900">{tool.title}</div>
                     {tool.description && (
                       <div className="text-xs text-gray-400 mt-0.5 truncate">{tool.description}</div>
                     )}
-                    <div className="text-xs text-indigo-400 mt-0.5 truncate">{tool.url}</div>
+                    <div className="text-xs text-sky-400 mt-0.5 truncate">{tool.url}</div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button onClick={() => setModal({ open: true, tool })}
@@ -165,7 +165,7 @@ export default function TravelToolsPage() {
                       <Icon name="edit" />
                     </button>
                     <button onClick={() => window.open(tool.url, '_blank')}
-                      className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                      className="p-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors">
                       <Icon name="open_in_new" className="text-white" />
                     </button>
                     <button onClick={() => handleDelete(tool.id)}

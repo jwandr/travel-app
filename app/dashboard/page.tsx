@@ -57,18 +57,18 @@ function CreateTripModal({ userId, onCreated, onClose }: {
             <label className="block text-sm font-medium text-gray-700 mb-1">Trip name</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} autoFocus
               placeholder="e.g. Japan Spring 2026"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Start date</label>
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Duration (days)</label>
             <input type="number" value={duration} min={1} max={90}
               onChange={(e) => setDuration(Number(e.target.value))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
           </div>
         </div>
         {error && <p className="text-sm text-red-500">{error}</p>}
@@ -78,7 +78,7 @@ function CreateTripModal({ userId, onCreated, onClose }: {
             Cancel
           </button>
           <button onClick={handleSubmit} disabled={saving}
-            className="flex-1 bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+            className="flex-1 bg-sky-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-sky-700 disabled:opacity-50">
             {saving ? 'Creating…' : 'Create Trip'}
           </button>
         </div>
@@ -105,17 +105,17 @@ function TripCard({ trip, onOpen, onDelete }: {
     <div className="bg-white border border-gray-100 rounded-xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow group">
       {/* Shared indicator */}
       <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-        trip.is_owner ? 'bg-indigo-50' : 'bg-violet-50'
+        trip.is_owner ? 'bg-sky-50' : 'bg-violet-50'
       }`}>
         <Icon
           name={trip.is_owner ? 'luggage' : 'group'}
-          className={trip.is_owner ? 'text-indigo-400' : 'text-violet-400'}
+          className={trip.is_owner ? 'text-sky-400' : 'text-violet-400'}
         />
       </div>
 
       <button className="flex-1 text-left min-w-0" onClick={onOpen}>
         <div className="flex items-center gap-2">
-          <div className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors truncate">
+          <div className="font-semibold text-gray-900 group-hover:text-sky-600 transition-colors truncate">
             {trip.name}
           </div>
           {!trip.is_owner && (
@@ -181,7 +181,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">My Trips</h1>
             <button onClick={() => setShowCreate(true)}
-              className="bg-indigo-600 text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2">
+              className="bg-sky-600 text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-sky-700 transition-colors flex items-center gap-2">
               <Icon name="add" className="text-white" /> New Trip
             </button>
           </div>

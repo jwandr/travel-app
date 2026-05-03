@@ -68,7 +68,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex w-52 shrink-0 bg-white border-r border-gray-100 flex-col">
         {/* Logo */}
         <div className="px-5 py-5 flex items-center gap-2.5 border-b border-gray-100">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-sky-600 rounded-lg flex items-center justify-center">
             <Icon name="flight" className="text-white" />
           </div>
           <span className="font-semibold text-gray-900 text-sm">Travel Planner</span>
@@ -85,11 +85,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => router.push(item.href)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${
                     active
-                      ? 'bg-indigo-50 text-indigo-700 font-medium'
+                      ? 'bg-sky-50 text-sky-700 font-medium'
                       : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
-                  <Icon name={item.icon} className={active ? 'text-indigo-600' : 'text-gray-400'} />
+                  <Icon name={item.icon} className={active ? 'text-sky-600' : 'text-gray-400'} />
                   {item.label}
                 </button>
 
@@ -102,7 +102,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         onClick={() => router.push(`/trip/${trip.id}`)}
                         className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors text-left ${
                           pathname === `/trip/${trip.id}`
-                            ? 'bg-indigo-50 text-indigo-700 font-medium'
+                            ? 'bg-sky-50 text-sky-700 font-medium'
                             : 'text-gray-400 hover:bg-gray-50 hover:text-gray-700'
                         }`}
                       >
@@ -146,7 +146,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           pathname.startsWith('/trip') ? 'hidden' : 'flex'
         }`}>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <div className="w-7 h-7 bg-sky-600 rounded-lg flex items-center justify-center">
               <Icon name="flight" className="text-white !text-sm" />
             </div>
             <span className="font-semibold text-gray-900 text-sm">Travel Planner</span>
@@ -179,11 +179,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         onClick={() => { router.push(item.href); setMobileMenuOpen(false) }}
                         className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors text-left ${
                           active
-                            ? 'bg-indigo-50 text-indigo-700 font-medium'
+                            ? 'bg-sky-50 text-sky-700 font-medium'
                             : 'text-gray-500 hover:bg-gray-50'
                         }`}
                       >
-                        <Icon name={item.icon} className={active ? 'text-indigo-600' : 'text-gray-400'} />
+                        <Icon name={item.icon} className={active ? 'text-sky-600' : 'text-gray-400'} />
                         {item.label}
                       </button>
 
@@ -235,10 +235,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 onClick={() => router.push(item.href)}
                 className={`flex flex-col items-center gap-0.5 px-4 py-1 rounded-xl transition-colors ${
-                  active ? 'text-indigo-600' : 'text-gray-400'
+                  active ? 'text-sky-600' : 'text-gray-400'
                 }`}
               >
-                <Icon name={item.icon} className={active ? 'text-indigo-600' : 'text-gray-400'} />
+                <Icon name={item.icon} className={active ? 'text-sky-600' : 'text-gray-400'} />
                 <span className="text-xs">{item.label}</span>
               </button>
             )
