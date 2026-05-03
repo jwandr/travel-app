@@ -122,7 +122,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Promo */}
         <div className="mx-3 mb-3 p-3 bg-indigo-50 rounded-xl">
-          <img src="" />
+          <img src="https://raw.githubusercontent.com/jwandr/travel-app/refs/heads/main/public/rocky.png" />
         </div>
 
         {/* Bottom */}
