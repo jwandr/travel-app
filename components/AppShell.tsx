@@ -122,12 +122,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Promo */}
         <div className="mx-3 mb-3 p-3 bg-indigo-50 rounded-xl">
-          <p className="text-xs font-semibold text-gray-800">Plan together,</p>
-          <p className="text-xs font-semibold text-gray-800 mb-1">travel better</p>
-          <p className="text-xs text-gray-500 mb-2">Share your trip and collaborate in real time.</p>
-          <button className="text-xs text-indigo-600 font-medium hover:text-indigo-800 transition-colors">
-            Learn more →
-          </button>
+          <img src="" />
         </div>
 
         {/* Bottom */}
