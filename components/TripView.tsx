@@ -586,25 +586,8 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
                 </div>
               )}
             </div>
-	    {/* Location */}
-            {(item.type === 'activity' || item.type === 'food') && (
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Location</label>
-                <LocationInput
-                  value={item.location ?? ''}
-                  onChange={async (val, lat, lng) => {
-                    const updated = await updateItem(item.id, {
-                      location: val,
-                      location_lat: lat,
-                      location_lng: lng,
-                    })
-                    onChange(updated)
-                  }}
-                />
-              </div>
-            )}
-
-            {(item.type === 'flight' || item.type === 'transport') && (
+	    {/* Location — flights and transport get from/to, everything else gets a single location */}
+            {(item.type === 'flight' || item.type === 'transport') ? (
               <div className="space-y-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">From</label>
@@ -636,6 +619,21 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
                     }}
                   />
                 </div>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Location</label>
+                <LocationInput
+                  value={item.location ?? ''}
+                  onChange={async (val, lat, lng) => {
+                    const updated = await updateItem(item.id, {
+                      location: val,
+                      location_lat: lat,
+                      location_lng: lng,
+                    })
+                    onChange(updated)
+                  }}
+                />
               </div>
             )}
             <div>
