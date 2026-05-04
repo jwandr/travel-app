@@ -69,7 +69,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Logo */}
         <div className="px-5 py-5 flex items-center gap-2.5 border-b border-gray-100">
           <div className="w-8 h-8 bg-sky-600 rounded-lg flex items-center justify-center">
-            <Icon name="flight" className="text-white" />
+            <Icon name="airline_stops" className="text-white" />
           </div>
           <span className="font-semibold text-gray-900 text-sm">Travel Planner</span>
         </div>
