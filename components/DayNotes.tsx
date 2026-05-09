@@ -121,7 +121,7 @@ export default function DayNotes({ dayId, initialNotes, onChange, compact = fals
               onClick={(e) => { e.stopPropagation(); setEditing(false) }}
               className="text-xs text-sky-500 hover:text-sky-700 font-medium"
             >
-              Done
+              Saved
             </button>
           </div>
         )}
