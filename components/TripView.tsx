@@ -980,7 +980,7 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
   const [activeDragItem, setActiveDragItem] = useState<Item | null>(null)
   const [overDayId, setOverDayId] = useState<string | null>(null)
   const [showMap, setShowMap] = useState(false)
-  const [mapExpanded, setMapExpanded] = useState(false)
+  const [mapExpanded, setMapExpanded] = useState(true)
   const [showDayMap, setShowDayMap] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -1134,7 +1134,7 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
   useEffect(() => {
     setSelectedItem(null)
     setShowDayMap(false)
-    setMapExpanded(false)
+    setMapExpanded(true)
   }, [activeTabId])
 
   const cascadeDayFromItem = async (updatedItem: Item) => {
@@ -1289,17 +1289,6 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
                       {new Date(activeDay.date).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setShowDayMap((prev) => !prev)}
-                        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                          showDayMap
-                            ? 'bg-sky-600 text-white'
-                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                        }`}
-                      >
-                        <span className="material-symbols-rounded" style={{ fontSize: 14 }}>map</span>
-                        {showDayMap ? 'Hide map' : 'Day map'}
-                      </button>
                       {showDayMap && (
                         <button
                           onClick={() => setMapExpanded((prev) => !prev)}
@@ -1311,6 +1300,18 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
                           {mapExpanded ? 'Shrink' : 'Expand'}
                         </button>
                       )}
+		      <button
+                        onClick={() => setShowDayMap((prev) => !prev)}
+                        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                          showDayMap
+                            ? 'bg-sky-600 text-white'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                      >
+                        <span className="material-symbols-rounded" style={{ fontSize: 14 }}>map</span>
+                        {showDayMap ? 'Hide map' : 'Day map'}
+                      </button>
+                      
                     </div>
                   </div>
                 )}

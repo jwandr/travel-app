@@ -109,7 +109,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         <Icon name="chevron_right" className="text-gray-300 !text-sm shrink-0" />
                         <div className="min-w-0">
                           <div className="truncate font-medium">{trip.name}</div>
-                          <div className="text-gray-300">{formatShortDate(trip.start_date)}</div>
+                          <div className="text-gray-400">{formatShortDate(trip.start_date)} · {trip.duration_days} days</div>
                         </div>
                       </button>
                     ))}
@@ -198,7 +198,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                               <Icon name="chevron_right" className="text-gray-300 !text-sm shrink-0" />
                               <div className="min-w-0">
                                 <div className="truncate font-medium">{trip.name}</div>
-                                <div className="text-gray-300">{formatShortDate(trip.start_date)}</div>
+                                <div className="text-gray-400">{formatShortDate(trip.start_date)} · {trip.duration_days} days</div>
                               </div>
                             </button>
                           ))}
