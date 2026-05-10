@@ -47,7 +47,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         .map((row: any) => row.trips)
         .filter((t: Trip) => t.start_date >= today)
         .sort((a: Trip, b: Trip) => a.start_date.localeCompare(b.start_date))
-        .slice(0, 3)
+        .slice(0, 8)
 
       setUpcomingTrips(trips)
     }
