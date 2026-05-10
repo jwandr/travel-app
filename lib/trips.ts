@@ -9,19 +9,22 @@ export async function createTrip(input: {
   duration_days: number
   userId: string
   image_url?: string
+  userEmail?: string
 }): Promise<Trip> {
-  const { name, start_date, duration_days, userId } = input
+  const { name, start_date, duration_days, userId, userEmail } = input
 
   const { data: trip, error: tripError } = await supabase
     .from('trips')
     .insert({ name, start_date, duration_days, created_by: userId, image_url: input.image_url })
     .select()
     .single()
+
   if (tripError) throw tripError
 
   const { error: memberError } = await supabase
     .from('trip_members')
-    .insert({ trip_id: trip.id, user_id: userId, role: 'owner' })
+    .insert({ trip_id: trip.id, user_id: userId, role: 'owner', email: userEmail })
+
   if (memberError) throw memberError
 
   await generateDays(trip.id, start_date, duration_days)
@@ -403,23 +406,11 @@ export async function getTripMembers(tripId: string): Promise<{
 }[]> {
   const { data, error } = await supabase
     .from('trip_members')
-    .select('id, user_id, role')
+    .select('id, user_id, role, email')
     .eq('trip_id', tripId)
 
   if (error) throw error
-
-  // Look up emails
-  const members = await Promise.all(
-    (data ?? []).map(async (m) => {
-      const { data: u } = await supabase
-        .from('user_emails')
-        .select('email')
-        .eq('id', m.user_id)
-        .single()
-      return { ...m, email: u?.email ?? 'Unknown' }
-    })
-  )
-  return members
+  return (data ?? []).map((m) => ({ ...m, email: m.email ?? 'Unknown' }))
 }
 
 export async function getPendingInvites(tripId: string): Promise<{

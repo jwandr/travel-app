@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // Accept any pending invites for this user
       await supabase.rpc('accept_pending_invites')
       return NextResponse.redirect(new URL(next, request.url))
     }

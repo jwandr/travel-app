@@ -20,8 +20,11 @@ function formatDateRange(startStr: string, days: number) {
   return `${s} – ${e}`
 }
 
-function CreateTripModal({ userId, onCreated, onClose }: {
-  userId: string; onCreated: (trip: Trip) => void; onClose: () => void
+function CreateTripModal({ userId, userEmail, onCreated, onClose }: {
+  userId: string
+  userEmail: string
+  onCreated: (trip: Trip) => void
+  onClose: () => void
 }) {
   const [name, setName] = useState('')
   const [startDate, setStartDate] = useState('')
@@ -42,6 +45,7 @@ function CreateTripModal({ userId, onCreated, onClose }: {
         start_date: startDate,
         duration_days: duration,
         userId,
+        userEmail,
         image_url: imageUrl.trim() || undefined,
       })
       onCreated(trip)
@@ -312,6 +316,7 @@ export default function Dashboard() {
       {showCreate && user && (
         <CreateTripModal
           userId={user.id}
+          userEmail={user.email ?? ''}
           onCreated={(trip) => {
             setShowCreate(false)
             router.push(`/trip/${trip.id}`)

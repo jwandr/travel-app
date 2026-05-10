@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next') ?? '/dashboard'
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
@@ -13,15 +15,15 @@ export default function LoginPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.push('/dashboard')
+      if (data.user) router.push(next)
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
-      if (session?.user) router.push('/dashboard')
+      if (session?.user) router.push(next)
     })
 
     return () => listener.subscription.unsubscribe()
-  }, [router])
+  }, [router, next])
 
   const signIn = async () => {
     if (loading || !email.trim()) return
@@ -31,7 +33,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     })
 
@@ -46,7 +48,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-sm p-8 space-y-6">
-        {/* Logo / Title */}
         <div className="text-center space-y-1">
           <div className="text-4xl">✈️</div>
           <h1 className="text-xl font-semibold text-gray-900">Travel Planner</h1>
@@ -71,9 +72,7 @@ export default function LoginPage() {
         ) : (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email address
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
               <input
                 type="email"
                 value={email}
@@ -84,11 +83,7 @@ export default function LoginPage() {
                 autoFocus
               />
             </div>
-
-            {error && (
-              <p className="text-xs text-red-500">{error}</p>
-            )}
-
+            {error && <p className="text-xs text-red-500">{error}</p>}
             <button
               onClick={signIn}
               disabled={loading || !email.trim()}
@@ -96,7 +91,6 @@ export default function LoginPage() {
             >
               {loading ? 'Sending…' : 'Send magic link'}
             </button>
-
             <p className="text-xs text-center text-gray-400">
               No password needed — we'll email you a sign-in link.
             </p>
