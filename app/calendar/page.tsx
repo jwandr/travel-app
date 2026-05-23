@@ -190,7 +190,7 @@ function MonthRow({ year, month, trips, tripColours, memberMap, today, onSelectT
   })
 
   // Calculate row height based on number of overlapping trips
-  const rowHeight = Math.max(32, overlappingTrips.length * 26 + 12)
+  const rowHeight = Math.max(32, overlappingTrips.length * 28 + 12)
 
   return (
     <div className="flex items-stretch border-b border-gray-100">
@@ -201,7 +201,7 @@ function MonthRow({ year, month, trips, tripColours, memberMap, today, onSelectT
         }`}
         style={{ width: MONTH_LABEL_WIDTH }}
       >
-        <span className="text-xs font-bold uppercase tracking-wide">{monthLabel}</span>
+        <span className="text-xs font-bold tracking-wide">{monthLabel}</span>
         {isCurrentMonth && <span className="text-xs text-sky-400">now</span>}
       </div>
 
@@ -216,8 +216,8 @@ function MonthRow({ year, month, trips, tripColours, memberMap, today, onSelectT
             const isToday = isCurrentMonth && day === todayDay && inMonth
 
             let bgClass = ''
-            if (!inMonth) bgClass = 'bg-gray-200/80'
-            else if (weekend) bgClass = 'bg-gray-200/50'
+            if (!inMonth) bgClass = 'bg-gray-300/100'
+            else if (weekend) bgClass = 'bg-gray-200/70'
 
             return (
               <div
@@ -226,7 +226,7 @@ function MonthRow({ year, month, trips, tripColours, memberMap, today, onSelectT
                 style={{ width: DAY_COL_WIDTH }}
               >
                 {isToday && (
-                  <div className="absolute inset-y-0 border-l-2 border-sky-400 bg-sky-50/60 z-10"
+                  <div className="absolute inset-y-0 border-l-2 border-sky-400 bg-sky-200/60 z-10"
                     style={{ left: (day - 1) * DAY_COL_WIDTH, width: DAY_COL_WIDTH }} />
                 )}
               </div>
@@ -266,7 +266,7 @@ function MonthRow({ year, month, trips, tripColours, memberMap, today, onSelectT
                 ${endsThisMonth ? 'rounded-r-full' : ''}
               `}>
                 {startsThisMonth && (
-                  <span className="truncate">{trip.name}</span>
+                  <span className="truncate">{trip.name} - {trip.duration_days} days</span>
                 )}
               </div>
             </div>
