@@ -39,7 +39,7 @@ export default function MemberAvatars({
 }: MemberAvatarsProps) {
   if (members.length === 0) return null
 
-  const sizeClass = size === 'sm' ? 'w-6 h-6 text-xs' : 'w-8 h-8 text-xs'
+  const sizeClass = size === 'sm' ? 'w-10 h-10 text-xs' : 'w-8 h-8 text-xs'
   const overlapClass = size === 'sm' ? '-ml-2' : '-ml-2.5'
   const shown = members.slice(0, max)
   const overflow = members.length - max
