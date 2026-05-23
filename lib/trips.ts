@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Trip, Day, Item, Accommodation, TravelTool, Profile } from './types'
+import type { Trip, Day, Item, Accommodation, TravelTool } from './types'
 
 // ─── Trips ────────────────────────────────────────────────────────────────────
 
