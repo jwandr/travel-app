@@ -190,7 +190,7 @@ function MonthRow({ year, month, trips, tripColours, memberMap, today, onSelectT
   })
 
   // Calculate row height based on number of overlapping trips
-  const rowHeight = Math.max(32, overlappingTrips.length * 28 + 12)
+  const rowHeight = Math.max(40, overlappingTrips.length * 28 + 12)
 
   return (
     <div className="flex items-stretch border-b border-gray-100">

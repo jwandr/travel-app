@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Trip, Day, Item, Accommodation, TravelTool } from './types'
+import type { Trip, Day, Item, Accommodation, TravelTool, Profile } from './types'
 
 // ─── Trips ────────────────────────────────────────────────────────────────────
 
@@ -442,6 +442,13 @@ export async function getUserTrips(userId: string): Promise<(Trip & { is_owner: 
 }
 
 // ─── Profiles ─────────────────────────────────────────────────────────────────
+
+export type Profile = {
+  id: string
+  display_name?: string
+  avatar_url?: string
+  updated_at?: string
+}
 
 export async function getProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
