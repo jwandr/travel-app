@@ -73,3 +73,10 @@ export interface TripMember {
   user_id: string
   role: 'owner' | 'editor' | 'viewer'
 }
+
+export interface Profile {
+  id: string
+  display_name?: string
+  avatar_url?: string
+  email?: string // joined from trip_members
+}

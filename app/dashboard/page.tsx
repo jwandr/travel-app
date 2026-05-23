@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { getUserTrips, createTrip, deleteTrip } from '@/lib/trips'
+import { getUserTrips, createTrip, deleteTrip, getTripMembersForTrips } from '@/lib/trips'
 import AppShell from '@/components/AppShell'
 import type { Trip } from '@/lib/types'
+import MemberAvatars from '@/components/MemberAvatars'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-rounded ${className}`} style={{ fontSize: 20 }}>{name}</span>
@@ -103,10 +104,12 @@ function CreateTripModal({ userId, userEmail, onCreated, onClose }: {
     </div>
   )
 }
-function TripCard({ trip, onOpen, onDelete }: {
+function TripCard({ trip, onOpen, onDelete, members, currentUserId }: {
   trip: Trip & { is_owner: boolean }
   onOpen: () => void
   onDelete: () => void
+  members: { user_id: string; email: string; display_name?: string; avatar_url?: string }[]
+  currentUserId: string
 }) {
   const [confirming, setConfirming] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -143,23 +146,29 @@ function TripCard({ trip, onOpen, onDelete }: {
 
       {/* Content */}
       <button className="flex-1 text-left px-4 py-4 min-w-0" onClick={onOpen}>
-        <div className="flex items-center gap-2">
-          <div className={`font-semibold text-gray-900 group-hover:text-sky-600 transition-colors truncate`}>
-            {trip.name}
-          </div>
-          {!trip.is_owner && (
-            <span className="shrink-0 text-xs px-2 py-0.5 bg-violet-50 text-violet-600 border border-violet-200 rounded-full font-medium">
-              Shared
-            </span>
-          )}
+        <div className="font-semibold text-gray-900 group-hover:text-sky-600 transition-colors truncate">
+          {trip.name}
         </div>
         <div className="text-sm text-gray-400 mt-0.5">
           {formatDateRange(trip.start_date, trip.duration_days)} · {trip.duration_days} days
         </div>
+        {!trip.is_owner && (
+          <span className="inline-flex mt-1 text-xs px-2 py-0.5 bg-violet-50 text-violet-600 border border-violet-200 rounded-full font-medium">
+            Shared
+          </span>
+        )}
       </button>
 
-      {/* Delete */}
-      <div className="flex items-center pr-4">
+      {/* Right side — avatars + delete */}
+      <div className="flex items-center gap-3 pr-4">
+        {members.length > 0 && (
+          <MemberAvatars
+            members={members}
+            currentUserId={currentUserId}
+            size="sm"
+            max={3}
+          />
+        )}
         {trip.is_owner && (
           confirming ? (
             <div className="flex items-center gap-2">
@@ -168,7 +177,8 @@ function TripCard({ trip, onOpen, onDelete }: {
                 className="text-sm text-red-500 font-medium hover:text-red-700 disabled:opacity-50">
                 {deleting ? '…' : 'Yes'}
               </button>
-              <button onClick={() => setConfirming(false)} className="text-sm text-gray-400 hover:text-gray-600">No</button>
+              <button onClick={() => setConfirming(false)}
+                className="text-sm text-gray-400 hover:text-gray-600">No</button>
             </div>
           ) : (
             <button onClick={() => setConfirming(true)}
@@ -205,6 +215,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const router = useRouter()
+  const [memberMap, setMemberMap] = useState<Record<string, any[]>>({})
 
   useEffect(() => {
     const load = async () => {
@@ -214,6 +225,11 @@ export default function Dashboard() {
       const t = await getUserTrips(data.user.id)
       setTrips(t)
       setLoading(false)
+
+      if (t.length > 0) {
+        const map = await getTripMembersForTrips(t.map((trip) => trip.id))
+        setMemberMap(map)
+      }
     }
     load()
   }, [router])
@@ -267,6 +283,8 @@ export default function Dashboard() {
                             trip={trip}
                             onOpen={() => router.push(`/trip/${trip.id}`)}
                             onDelete={() => setTrips((prev) => prev.filter((t) => t.id !== trip.id))}
+                            members={memberMap[trip.id] ?? []}
+                            currentUserId={user?.id ?? ''}
                           />
                         ))}
                       </div>
@@ -295,13 +313,15 @@ export default function Dashboard() {
                         </div>
                         <div className="space-y-3">
                           {group.trips.map((trip) => (
-                            <TripCard
-                              key={trip.id}
-                              trip={trip}
-                              onOpen={() => router.push(`/trip/${trip.id}`)}
-                              onDelete={() => {}}
-                            />
-                          ))}
+                          <TripCard
+                            key={trip.id}
+                            trip={trip}
+                            onOpen={() => router.push(`/trip/${trip.id}`)}
+                            onDelete={() => setTrips((prev) => prev.filter((t) => t.id !== trip.id))}
+                            members={memberMap[trip.id] ?? []}
+                            currentUserId={user?.id ?? ''}
+                          />
+                        ))}
                         </div>
                       </div>
                     ))}

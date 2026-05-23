@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { inviteToTrip, getTripMembers, getPendingInvites, removeInvite, removeMember } from '@/lib/trips'
 import type { Trip } from '@/lib/types'
+import ProfileSettings from './ProfileSettings'
+import MemberAvatars from './MemberAvatars'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <span className={`material-symbols-rounded ${className}`} style={{ fontSize: 20 }}>{name}</span>
@@ -35,6 +37,7 @@ export default function ShareModal({ trip, userId, userEmail, onClose }: {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [showProfile, setShowProfile] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -201,6 +204,23 @@ export default function ShareModal({ trip, userId, userEmail, onClose }: {
         <p className="text-xs text-gray-400">
           Copy the invite link and send it directly to your collaborator. They'll need to sign in with the invited email address.
         </p>
+	{/* Your profile */}
+        <div>
+          <button
+            onClick={() => setShowProfile(!showProfile)}
+            className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: 14 }}>
+              {showProfile ? 'expand_less' : 'expand_more'}
+            </span>
+            Edit your profile (name &amp; avatar)
+          </button>
+          {showProfile && (
+            <div className="mt-3">
+              <ProfileSettings userId={userId} onClose={() => setShowProfile(false)} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

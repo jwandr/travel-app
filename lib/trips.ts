@@ -401,18 +401,6 @@ export async function inviteToTrip(
   if (fnError) throw fnError
 }
 
-export async function getTripMembers(tripId: string): Promise<{
-  id: string; user_id: string; role: string; email: string
-}[]> {
-  const { data, error } = await supabase
-    .from('trip_members')
-    .select('id, user_id, role, email')
-    .eq('trip_id', tripId)
-
-  if (error) throw error
-  return (data ?? []).map((m) => ({ ...m, email: m.email ?? 'Unknown' }))
-}
-
 export async function getPendingInvites(tripId: string): Promise<{
   id: string; invited_email: string; role: string
 }[]> {
@@ -451,4 +439,84 @@ export async function getUserTrips(userId: string): Promise<(Trip & { is_owner: 
       is_owner: row.role === 'owner',
     }))
     .sort((a: Trip, b: Trip) => a.start_date.localeCompare(b.start_date))
+}
+
+// ─── Profiles ─────────────────────────────────────────────────────────────────
+
+export async function getProfile(userId: string): Promise<Profile | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single()
+  if (error) return null
+  return data
+}
+
+export async function upsertProfile(userId: string, updates: {
+  display_name?: string
+  avatar_url?: string
+}): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({ id: userId, ...updates, updated_at: new Date().toISOString() })
+  if (error) throw error
+}
+
+export async function getTripMembers(tripId: string): Promise<{
+  id: string; user_id: string; role: string; email: string
+  display_name?: string; avatar_url?: string
+}[]> {
+  const { data, error } = await supabase
+    .from('trip_members')
+    .select('id, user_id, role, email')
+    .eq('trip_id', tripId)
+  if (error) throw error
+
+  // Fetch profiles for each member
+  const members = await Promise.all(
+    (data ?? []).map(async (m) => {
+      const profile = await getProfile(m.user_id)
+      return {
+        ...m,
+        email: m.email ?? 'Unknown',
+        display_name: profile?.display_name,
+        avatar_url: profile?.avatar_url,
+      }
+    })
+  )
+  return members
+}
+
+// Fetch members for multiple trips at once (for dashboard)
+export async function getTripMembersForTrips(tripIds: string[]): Promise<Record<string, { user_id: string; email: string; display_name?: string; avatar_url?: string }[]>> {
+  if (tripIds.length === 0) return {}
+
+  const { data, error } = await supabase
+    .from('trip_members')
+    .select('trip_id, user_id, email')
+    .in('trip_id', tripIds)
+
+  if (error) return {}
+
+  // Fetch all unique profiles
+  const uniqueUserIds = [...new Set((data ?? []).map((m) => m.user_id))]
+  const profiles = await Promise.all(uniqueUserIds.map((id) => getProfile(id)))
+  const profileMap = Object.fromEntries(
+    profiles.filter(Boolean).map((p) => [p!.id, p!])
+  )
+
+  // Group by trip
+  const result: Record<string, { user_id: string; email: string; display_name?: string; avatar_url?: string }[]> = {}
+  for (const m of data ?? []) {
+    if (!result[m.trip_id]) result[m.trip_id] = []
+    const profile = profileMap[m.user_id]
+    result[m.trip_id].push({
+      user_id: m.user_id,
+      email: m.email ?? '',
+      display_name: profile?.display_name,
+      avatar_url: profile?.avatar_url,
+    })
+  }
+  return result
 }

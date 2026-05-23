@@ -14,6 +14,7 @@ import { CSS } from '@dnd-kit/utilities'
 import {
   addItem, updateItem, deleteItem, updateTrip, deleteTrip,
   getAccommodation, addAccommodation, updateAccommodation, deleteAccommodation,
+  getTripMembers,
 } from '@/lib/trips'
 import AppShell from '@/components/AppShell'
 import ShareModal from '@/components/ShareModal'
@@ -23,6 +24,7 @@ import type TripMap from './TripMap'
 import LocationInput from '@/components/LocationInput'
 import DayNotes from '@/components/DayNotes'
 import { buildTripExport } from '@/lib/export'
+import MemberAvatars from '@/components/MemberAvatars'
 
 // ─── Icon ─────────────────────────────────────────────────────────────────────
 
@@ -983,6 +985,7 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
   const [mapExpanded, setMapExpanded] = useState(true)
   const [showDayMap, setShowDayMap] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [tripMembers, setTripMembers] = useState<any[]>([])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -993,6 +996,11 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
     getAccommodation(trip.id).then(setAccom)
     supabase.auth.getUser().then(({ data }) => {
       if (data.user?.email) setUserEmail(data.user.email)
+    })
+    getTripMembers(trip.id).then((members) => {
+      setTripMembers(members)
+    }).catch(() => {
+      setTripMembers([])
     })
   }, [trip.id])
 
@@ -1166,7 +1174,7 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold text-gray-900 truncate">{trip.name}</h1>
                 <button onClick={() => setShowEdit(true)} className="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
-                  <Icon name="edit" />
+                  <span className="material-symbols-rounded" style={{ fontSize: 18 }}>edit</span>
                 </button>
               </div>
               <p className="hidden sm:block text-xs text-gray-400 mt-0.5">
@@ -1174,6 +1182,15 @@ export default function TripView({ trip: initialTrip, days: initialDays, userId 
               </p>
             </div>
             <div className="flex items-center gap-2 ml-3 shrink-0">
+              {tripMembers.length > 0 && (
+                <MemberAvatars
+                  members={tripMembers}
+                  currentUserId={userId}
+                  size="sm"
+                  max={4}
+                  onClick={() => setShowShare(true)}
+                />
+              )}
               <button
                 onClick={handleExport}
                 className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg transition-colors font-medium border ${

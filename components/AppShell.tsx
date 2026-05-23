@@ -6,9 +6,10 @@ import { supabase } from '@/lib/supabase'
 import type { Trip } from '@/lib/types'
 
 const NAV = [
-  { label: 'Trips',        icon: 'luggage',              href: '/dashboard' },
-  { label: 'Travel Tools', icon: 'build',                href: '/travel-tools' },
-  { label: 'Reservations', icon: 'confirmation_number',  href: '/reservations' },
+  { label: 'Trips',         icon: 'luggage',             href: '/dashboard' },
+  { label: 'Calendar',      icon: 'calendar_month',      href: '/calendar' },
+  { label: 'Travel Tools',  icon: 'build',               href: '/travel-tools' },
+  { label: 'Reservations',  icon: 'confirmation_number', href: '/reservations' },
 ]
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
