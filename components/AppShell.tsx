@@ -8,6 +8,7 @@ import type { Trip } from '@/lib/types'
 const NAV = [
   { label: 'Trips',         icon: 'luggage',             href: '/dashboard' },
   { label: 'Calendar',      icon: 'calendar_month',      href: '/calendar' },
+  { label: 'Itinerary',     icon: 'map',                 href: '/itinerary' },
   { label: 'Travel Tools',  icon: 'build',               href: '/travel-tools' },
   { label: 'Reservations',  icon: 'confirmation_number', href: '/reservations' },
 ]
@@ -48,7 +49,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         .map((row: any) => row.trips)
         .filter((t: Trip) => t.start_date >= today)
         .sort((a: Trip, b: Trip) => a.start_date.localeCompare(b.start_date))
-        .slice(0, 8)
+        .slice(0, 5)
 
       setUpcomingTrips(trips)
     }
@@ -235,7 +236,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <button
                 key={item.href}
                 onClick={() => router.push(item.href)}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1 rounded-xl transition-colors ${
+                className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors ${
                   active ? 'text-sky-600' : 'text-gray-400'
                 }`}
               >
