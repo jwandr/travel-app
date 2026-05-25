@@ -16,10 +16,19 @@ import type {
 // ── Read ──────────────────────────────────────────────────────────────────────
 
 export async function fetchItinerary(userId: string, itineraryId?: string): Promise<Itinerary | null> {
-  let query = supabase.from('itineraries').select('*').eq('user_id', userId)
-  if (itineraryId) query = query.eq('id', itineraryId)
-  else query = query.order('created_at', { ascending: true }).limit(1)
-
+  let query = supabase.from('itineraries').select('*')
+ 
+  if (itineraryId) {
+    // Fetch a specific itinerary — RLS ensures the user can only see it
+    // if they're the owner or a member. Don't filter by user_id here.
+    query = query.eq('id', itineraryId)
+  } else {
+    // No specific ID — get the first itinerary this user owns or is a member of.
+    // Filter by user_id to get owned ones first; the page's loadItinerary
+    // handles the full merge of owned + shared.
+    query = query.eq('user_id', userId).order('created_at', { ascending: true }).limit(1)
+  }
+ 
   const { data: itinRow, error: itinErr } = await query.maybeSingle()
   if (itinErr) throw itinErr
   if (!itinRow) return null

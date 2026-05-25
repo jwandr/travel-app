@@ -699,6 +699,11 @@ export default function ItineraryPage() {
 
   // ── Load ─────────────────────────────────────────────────────────────────
 
+  // ── PATCH: replace loadItinerary in app/itinerary/page.tsx ───────────────────
+// Find the existing loadItinerary useCallback and replace the entire function
+// body with this. The key change is fetching all itineraries the user is a
+// MEMBER of (not just ones they created), then merging and deduplicating.
+
   const loadItinerary = useCallback(async (itinId?: string) => {
     setLoading(true)
     try {
@@ -706,24 +711,60 @@ export default function ItineraryPage() {
       if (!user) return
       setCurrentUser({ id: user.id, email: user.email ?? '' })
 
-      const { data: allRows, error: allErr } = await supabase
-        .from('itineraries').select('*').eq('user_id', user.id).order('created_at', { ascending: true })
-      if (allErr) throw allErr
-      setAllItineraries(allRows ?? [])
+      // Fetch itineraries the user CREATED
+      const { data: ownedRows, error: ownedErr } = await supabase
+        .from('itineraries')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+      if (ownedErr) throw ownedErr
 
-      let targetId = itinId ?? allRows?.[0]?.id
+      // Fetch itineraries the user is a MEMBER of (shared with them)
+      const { data: memberRows, error: memberErr } = await supabase
+        .from('itinerary_members')
+        .select('itinerary_id, itineraries(*)')
+        .eq('user_id', user.id)
+      if (memberErr) throw memberErr
+
+      // Merge and deduplicate by id
+      const memberItins = (memberRows ?? [])
+        .map((r: any) => r.itineraries)
+        .filter(Boolean)
+
+      const allMap = new Map<string, any>()
+      for (const row of [...(ownedRows ?? []), ...memberItins]) {
+        if (row && !allMap.has(row.id)) allMap.set(row.id, row)
+      }
+      const allRows = Array.from(allMap.values())
+        .sort((a, b) => a.created_at.localeCompare(b.created_at))
+
+      setAllItineraries(allRows)
+
+      let targetId = itinId ?? allRows[0]?.id
+
+      // First-ever use — create a default itinerary
       if (!targetId) {
         const { data: newRow, error: createErr } = await supabase
-          .from('itineraries').insert({ user_id: user.id, title: 'Round the World', start_date: '2026-01-16', year_label: 'Year 1' })
-          .select().single()
+          .from('itineraries')
+          .insert({ user_id: user.id, title: 'Round the World', start_date: '2026-01-16', year_label: 'Year 1' })
+          .select()
+          .single()
         if (createErr) throw createErr
-        setAllItineraries([newRow]); targetId = newRow.id
+        setAllItineraries([newRow])
+        targetId = newRow.id
       }
 
       const itin = await fetchItinerary(user.id, targetId)
-      if (itin) { setItinerary(itin); setLegs(itin.legs); setFilterRegion('All') }
-    } catch (e: any) { setError(e.message ?? 'Failed to load') }
-    finally { setLoading(false) }
+      if (itin) {
+        setItinerary(itin)
+        setLegs(itin.legs)
+        setFilterRegion('All')
+      }
+    } catch (e: any) {
+      setError(e.message ?? 'Failed to load')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { loadItinerary() }, [loadItinerary])
