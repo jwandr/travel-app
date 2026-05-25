@@ -89,20 +89,21 @@ export interface Profile {
 // Itinerary types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ItineraryMode     = 'Transit' | 'Experience' | 'Maximise' | 'Reset'
-export type FareType          = 'Full fare' | 'ID90' | 'ZED' | 'Staff standby'
-export type ActivityTier      = 'must' | 'nice' | 'optional'
-export type AccomType         = 'Boutique' | 'Budget' | 'Apartment' | 'Camping' | 'Hostel' | 'Resort' | 'TBD'
-export type BookingStatus     = 'unplanned' | 'researching' | 'noted' | 'booked'
+export type ItineraryMode  = 'Transit' | 'Experience' | 'Maximise' | 'Reset'
+export type FareType       = 'Full fare' | 'ID90' | 'ZED' | 'Staff standby'
+export type ActivityTier   = 'must' | 'nice' | 'optional'
+export type AccomType      = 'Boutique' | 'Budget' | 'Apartment' | 'Camping' | 'Hostel' | 'Resort' | 'TBD'
+export type BookingStatus  = 'unplanned' | 'researching' | 'noted' | 'booked'
+export type ItineraryRole  = 'owner' | 'editor' | 'viewer'
 
-// ── Database row shapes (match Supabase column names exactly) ─────────────────
+// ── DB row shapes ─────────────────────────────────────────────────────────────
 
 export interface ItineraryRow {
   id: string
   user_id: string
   title: string
   year_label: string | null
-  start_date: string          // ISO date string 'YYYY-MM-DD'
+  start_date: string
   notes: string | null
   created_at: string
   updated_at: string
@@ -116,6 +117,7 @@ export interface LegRow {
   mode: ItineraryMode
   destination: string
   duration_days: number
+  daily_budget_aud: number | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -143,6 +145,7 @@ export interface ActivityRow {
   description: string
   tier: ActivityTier
   category: string | null
+  cost_aud: number | null
   created_at: string
 }
 
@@ -154,25 +157,48 @@ export interface AccomNoteRow {
   name: string | null
   notes: string | null
   booking_status: BookingStatus
+  cost_per_night_aud: number | null
   created_at: string
   updated_at: string
 }
 
-// ── Hydrated client-side shape (used in React state) ─────────────────────────
-// A single Leg object holds all its child rows, assembled after fetching.
-
-export interface ItineraryLeg {
+export interface ItineraryMemberRow {
   id: string
   itinerary_id: string
+  user_id: string
+  role: ItineraryRole
+  email: string
+  created_at: string
+}
+
+export interface ItineraryInviteRow {
+  id: string
+  itinerary_id: string
+  invited_email: string
+  invited_by: string
+  role: ItineraryRole
+  created_at: string
+}
+
+// ── Hydrated client-side shapes ───────────────────────────────────────────────
+
+export interface Activity {
+  id: string
   sort_order: number
-  region: string
-  mode: ItineraryMode
-  destination: string
-  duration_days: number
+  description: string
+  tier: ActivityTier
+  category: string
+  cost_aud: string
+}
+
+export interface AccomNote {
+  id: string
+  sort_order: number
+  accom_type: AccomType
+  name: string
   notes: string
-  transit: TransitDetail | null   // null if mode !== 'Transit' or not yet created
-  activities: Activity[]
-  accom: AccomNote[]
+  booking_status: BookingStatus
+  cost_per_night_aud: string
 }
 
 export interface TransitDetail {
@@ -183,25 +209,23 @@ export interface TransitDetail {
   airline: string
   fare_type: FareType
   flight_class: string
-  cost_aud: string               // kept as string for controlled input
+  cost_aud: string
   booking_notes: string
 }
 
-export interface Activity {
+export interface ItineraryLeg {
   id: string
+  itinerary_id: string
   sort_order: number
-  description: string
-  tier: ActivityTier
-  category: string
-}
-
-export interface AccomNote {
-  id: string
-  sort_order: number
-  accom_type: AccomType
-  name: string
+  region: string
+  mode: ItineraryMode
+  destination: string
+  duration_days: number
+  daily_budget_aud: string
   notes: string
-  booking_status: BookingStatus
+  transit: TransitDetail | null
+  activities: Activity[]
+  accom: AccomNote[]
 }
 
 export interface Itinerary {
@@ -214,7 +238,7 @@ export interface Itinerary {
   legs: ItineraryLeg[]
 }
 
-// ── Helper: map DB rows → hydrated ItineraryLeg ───────────────────────────────
+// ── hydrateLeg ────────────────────────────────────────────────────────────────
 
 export function hydrateLeg(
   row: LegRow,
@@ -230,6 +254,7 @@ export function hydrateLeg(
     mode: row.mode,
     destination: row.destination,
     duration_days: row.duration_days,
+    daily_budget_aud: row.daily_budget_aud != null ? String(row.daily_budget_aud) : '',
     notes: row.notes ?? '',
     transit: transit ? {
       id: transit.id,
@@ -248,6 +273,7 @@ export function hydrateLeg(
       description: a.description,
       tier: a.tier,
       category: a.category ?? '',
+      cost_aud: a.cost_aud != null ? String(a.cost_aud) : '',
     })),
     accom: accom.map(a => ({
       id: a.id,
@@ -256,6 +282,59 @@ export function hydrateLeg(
       name: a.name ?? '',
       notes: a.notes ?? '',
       booking_status: a.booking_status,
+      cost_per_night_aud: a.cost_per_night_aud != null ? String(a.cost_per_night_aud) : '',
     })),
+  }
+}
+
+// ── Budget helpers ────────────────────────────────────────────────────────────
+
+export interface BudgetSummary {
+  transitTotal: number
+  accomTotal: number
+  activitiesTotal: number
+  livingTotal: number
+  grandTotal: number
+  avgDailyBudget: number
+  totalDays: number
+}
+
+export function computeBudget(legs: ItineraryLeg[]): BudgetSummary {
+  let transitTotal    = 0
+  let accomTotal      = 0
+  let activitiesTotal = 0
+  let livingTotal     = 0
+  let totalDays       = 0
+  let weightedDaily   = 0
+
+  for (const leg of legs) {
+    const days = leg.duration_days
+    totalDays += days
+
+    if (leg.mode === 'Transit' && leg.transit?.cost_aud) {
+      transitTotal += Number(leg.transit.cost_aud) || 0
+    }
+
+    for (const a of leg.accom) {
+      accomTotal += (Number(a.cost_per_night_aud) || 0) * days
+    }
+
+    for (const a of leg.activities) {
+      activitiesTotal += Number(a.cost_aud) || 0
+    }
+
+    const daily = Number(leg.daily_budget_aud) || 0
+    livingTotal   += daily * days
+    weightedDaily += daily * days
+  }
+
+  return {
+    transitTotal,
+    accomTotal,
+    activitiesTotal,
+    livingTotal,
+    grandTotal: transitTotal + accomTotal + activitiesTotal + livingTotal,
+    avgDailyBudget: totalDays > 0 ? weightedDaily / totalDays : 0,
+    totalDays,
   }
 }
