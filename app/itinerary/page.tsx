@@ -529,10 +529,38 @@ function LegRow({ leg, startDate, expanded, saving, onSave, onToggle, onDelete, 
           )}
         </div>
 
-        {/* Duration + cost */}
-        <div className="shrink-0 text-right">
+        {/* Duration + per-leg costs */}
+        <div className="shrink-0 text-right space-y-0.5">
           <div className="text-sm font-medium text-gray-700">{leg.duration_days}d</div>
-          {costDisplay && <div className="text-xs text-gray-400 mt-0.5">{costDisplay}</div>}
+          {/* Transit cost */}
+          {leg.mode === 'Transit' && leg.transit?.cost_aud && Number(leg.transit.cost_aud) > 0 && (
+            <div className="text-xs text-gray-400 flex items-center justify-end gap-0.5">
+              <span className="material-symbols-rounded text-gray-300" style={{ fontSize: 11 }}>flight</span>
+              {fmtAud(Number(leg.transit.cost_aud))}
+            </div>
+          )}
+          {/* Accommodation cost for this leg */}
+          {leg.mode !== 'Transit' && (() => {
+            const accomTotal = leg.accom.reduce(
+              (s, a) => s + (Number(a.cost_per_night_aud) || 0) * leg.duration_days, 0
+            )
+            return accomTotal > 0 ? (
+              <div className="text-xs text-gray-400 flex items-center justify-end gap-0.5">
+                <span className="material-symbols-rounded text-gray-300" style={{ fontSize: 11 }}>bed</span>
+                {fmtAud(accomTotal)}
+              </div>
+            ) : null
+          })()}
+          {/* Living cost for this leg */}
+          {leg.mode !== 'Transit' && (() => {
+            const livingTotal = (Number(leg.daily_budget_aud) || 0) * leg.duration_days
+            return livingTotal > 0 ? (
+              <div className="text-xs text-gray-400 flex items-center justify-end gap-0.5">
+                <span className="material-symbols-rounded text-gray-300" style={{ fontSize: 11 }}>restaurant</span>
+                {fmtAud(livingTotal)}
+              </div>
+            ) : null
+          })()}
         </div>
 
         {saving && <div className="shrink-0 pt-0.5"><Icon name="sync" className="text-sky-400 !text-base animate-spin" /></div>}
@@ -655,16 +683,67 @@ function StatsRow({ legs }: { legs: ItineraryLeg[] }) {
   )
 }
 
-function RegionHeader({ label, legs, startDates }: { label: string; legs: ItineraryLeg[]; startDates: Map<string, Date> }) {
-  const first = startDates.get(legs[0].id)
-  const last  = startDates.get(legs[legs.length - 1].id)
+function RegionHeader({ label, legs, startDates }: {
+  label: string
+  legs: ItineraryLeg[]
+  startDates: Map<string, Date>
+}) {
+  const first     = startDates.get(legs[0].id)
+  const last      = startDates.get(legs[legs.length - 1].id)
   const totalDays = legs.reduce((s, l) => s + l.duration_days, 0)
-  const endDate = last ? addDays(last, legs[legs.length - 1].duration_days - 1) : null
+  const endDate   = last ? addDays(last, legs[legs.length - 1].duration_days - 1) : null
+ 
+  // Budget breakdown for this region
+  const budget = computeBudget(legs)
+  const hasBudget = budget.grandTotal > 0
+ 
   return (
-    <div className="flex items-center gap-3 pt-3 pb-1">
-      <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest whitespace-nowrap">{label}</span>
-      {first && endDate && <span className="text-xs text-gray-400 whitespace-nowrap">{fmtDate(first)} – {fmtDate(endDate)} · {totalDays}d</span>}
-      <div className="flex-1 h-px bg-gray-100" />
+    <div className="pt-3 pb-1">
+      {/* Row 1: label + date range + days */}
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest whitespace-nowrap">
+          {label}
+        </span>
+        {first && endDate && (
+          <span className="text-xs text-gray-400 whitespace-nowrap">
+            {fmtDate(first)} – {fmtDate(endDate)} · {totalDays}d
+          </span>
+        )}
+        <div className="flex-1 h-px bg-gray-100" />
+      </div>
+ 
+      {/* Row 2: cost breakdown — only shown if any costs entered */}
+      {hasBudget && (
+        <div className="flex items-center gap-3 mt-1 ml-0 flex-wrap">
+          {budget.transitTotal > 0 && (
+            <span className="text-xs text-gray-400 flex items-center gap-1">
+              <span className="material-symbols-rounded text-gray-300" style={{ fontSize: 13 }}>flight</span>
+              {fmtAud(budget.transitTotal)}
+            </span>
+          )}
+          {budget.accomTotal > 0 && (
+            <span className="text-xs text-gray-400 flex items-center gap-1">
+              <span className="material-symbols-rounded text-gray-300" style={{ fontSize: 13 }}>bed</span>
+              {fmtAud(budget.accomTotal)}
+            </span>
+          )}
+          {budget.livingTotal > 0 && (
+            <span className="text-xs text-gray-400 flex items-center gap-1">
+              <span className="material-symbols-rounded text-gray-300" style={{ fontSize: 13 }}>restaurant</span>
+              {fmtAud(budget.livingTotal)}
+            </span>
+          )}
+          {budget.activitiesTotal > 0 && (
+            <span className="text-xs text-gray-400 flex items-center gap-1">
+              <span className="material-symbols-rounded text-gray-300" style={{ fontSize: 13 }}>confirmation_number</span>
+              {fmtAud(budget.activitiesTotal)}
+            </span>
+          )}
+          <span className="text-xs font-medium text-gray-500">
+            = {fmtAud(budget.grandTotal)}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
