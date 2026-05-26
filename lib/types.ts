@@ -2,7 +2,7 @@
 // Existing types (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ItemType = 'flight' | 'activity' | 'food' | 'transport' | 'photo' | 'museum' | 'shopping' | 'markets' | 'bakery' | 'show'
+export type ItemType = 'flight' | 'activity' | 'food' | 'transport' | 'photo' | 'museum' | 'shopping' | 'markets' | 'bakery' | 'show' | 'tour' | 'drive'
 
 export interface Trip {
   id: string
