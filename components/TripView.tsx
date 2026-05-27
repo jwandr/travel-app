@@ -763,7 +763,6 @@ function ItemCard({ item, active, onClick, dragHandle }: {
             </span>
           )}
         </div>
-        {item.time_locked && <Icon name="lock" className="text-amber-400 !text-base shrink-0" />}
         {/* Confirmed badge on desktop only */}
         {item.confirmed && (
           <span className="hidden sm:inline-flex shrink-0 text-xs px-2 py-0.5 bg-green-50 text-green-600 border border-green-200 rounded-full font-medium">
