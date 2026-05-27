@@ -30,7 +30,7 @@ import MemberAvatars from '@/components/MemberAvatars'
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
   return (
-    <span className={`material-symbols-rounded ${className}`} style={{ fontSize: 20 }}>
+    <span className={`material-symbols-rounded ${className}`} style={{ fontSize: 24 }}>
       {name}
     </span>
   )
