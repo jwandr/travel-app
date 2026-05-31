@@ -711,7 +711,7 @@ function RegionHeader({ label, legs, startDates }: {
     <div className="pt-3 pb-1">
       {/* Row 1: label + date range + days */}
       <div className="flex items-center gap-3">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest whitespace-nowrap">
+        <span className="text-xm font-semibold text-gray-500 uppercase tracking-widest whitespace-nowrap">
           {label}
         </span>
         {first && endDate && (
