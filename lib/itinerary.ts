@@ -106,19 +106,25 @@ export async function saveLeg(leg: ItineraryLeg): Promise<void> {
     .eq('id', leg.id)
   if (legErr) throw legErr
 
-  if (leg.mode === 'Transit' || leg.mode === 'Flight' && leg.transit) {
-    const { error } = await supabase.from('itinerary_transit_details').upsert({
-      leg_id: leg.id,
-      from_airport: leg.transit.from_airport, to_airport: leg.transit.to_airport,
-      via_airport: leg.transit.via_airport || null, airline: leg.transit.airline || null,
-      fare_type: leg.transit.fare_type, flight_class: leg.transit.flight_class || null,
-      cost_aud: leg.transit.cost_aud ? Number(leg.transit.cost_aud) : null,
-      booking_notes: leg.transit.booking_notes || null,
-    }, { onConflict: 'leg_id' })
-    if (error) throw error
-  } else if (leg.mode !== 'Transit' || leg.mode === 'Flight') {
-    await supabase.from('itinerary_transit_details').delete().eq('leg_id', leg.id)
-  }
+  const transit = leg.transit
+
+if ((leg.mode === 'Transit' || leg.mode === 'Flight') && transit) {
+  const { error } = await supabase.from('itinerary_transit_details').upsert({
+    leg_id: leg.id,
+    from_airport: transit.from_airport,
+    to_airport: transit.to_airport,
+    via_airport: transit.via_airport || null,
+    airline: transit.airline || null,
+    fare_type: transit.fare_type,
+    flight_class: transit.flight_class || null,
+    cost_aud: transit.cost_aud ? Number(transit.cost_aud) : null,
+    booking_notes: transit.booking_notes || null,
+  }, { onConflict: 'leg_id' })
+
+  if (error) throw error
+} else if (leg.mode !== 'Transit' && leg.mode !== 'Flight') {
+  await supabase.from('itinerary_transit_details').delete().eq('leg_id', leg.id)
+}
 
   await Promise.all(leg.activities.map((a, i) =>
     supabase.from('itinerary_activities').upsert({
