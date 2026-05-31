@@ -49,10 +49,12 @@ function uid() { return crypto.randomUUID() }
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const MODE_STYLES: Record<ItineraryMode, { bg: string; text: string; icon: string }> = {
-  Transit:    { bg: 'bg-gray-50',   text: 'text-gray-600',   icon: 'flight' },
+  Flight:     { bg: 'bg-gray-50',   text: 'text-gray-600',   icon: 'flight' },
+  Transit:    { bg: 'bg-slate-50',  text: 'text-slate-600',  icon: 'directions_bus' },
+  Tour:       { bg: 'bg-red-50',    text: 'text-red-600',    icon: 'airport_shuttle' },
   Experience: { bg: 'bg-sky-50',    text: 'text-sky-700',    icon: 'explore' },
   Maximise:   { bg: 'bg-purple-50', text: 'text-purple-700', icon: 'landscape' },
-  Reset:      { bg: 'bg-green-50',  text: 'text-green-700',  icon: 'self_care' },
+  Reset:      { bg: 'bg-green-50',  text: 'text-green-700',  icon: 'stress_management' },
 }
 
 const TIER_STYLES: Record<ActivityTier, { bg: string; text: string; dot: string }> = {
@@ -66,14 +68,14 @@ const TIER_ORDER: Record<ActivityTier, number> = { must: 0, nice: 1, optional: 2
 // ── Icon ──────────────────────────────────────────────────────────────────────
 
 function Icon({ name, className = '' }: { name: string; className?: string }) {
-  return <span className={`material-symbols-rounded ${className}`} style={{ fontSize: 18 }}>{name}</span>
+  return <span className={`material-symbols-rounded ${className}`} style={{ fontSize: 20 }}>{name}</span>
 }
 
 function ModeBadge({ mode }: { mode: ItineraryMode }) {
   const s = MODE_STYLES[mode]
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text}`}>
-      <Icon name={s.icon} className={`${s.text} !text-sm`} />{mode}
+      <Icon name={s.icon} className={`${s.text}`} />{mode}
     </span>
   )
 }
@@ -471,7 +473,7 @@ function LegRow({ leg, startDate, expanded, saving, onSave, onToggle, onDelete, 
   const [draft, setDraft] = useState<ItineraryLeg>(leg)
   useEffect(() => { if (!expanded) setDraft(leg) }, [leg.id, expanded])
 
-  const isTransit = draft.mode === 'Transit'
+  const isTransit = draft.mode === 'Transit' || draft.mode === 'Flight'
   const sorted = [...leg.activities].sort((a, b) => (TIER_ORDER[a.tier] ?? 9) - (TIER_ORDER[b.tier] ?? 9))
   const costDisplay = isTransit && draft.transit?.cost_aud ? `$${Number(draft.transit.cost_aud).toLocaleString('en-AU')}` : null
 
@@ -494,24 +496,32 @@ function LegRow({ leg, startDate, expanded, saving, onSave, onToggle, onDelete, 
         </button>
 
         {/* Mode badge */}
-        <div className="hidden sm:block w-24 shrink-0 pt-0.5"><ModeBadge mode={leg.mode} /></div>
+        <div className="hidden sm:block w-26 shrink-0 pt-0.5"><ModeBadge mode={leg.mode} /></div>
 
         {/* Destination + date */}
         <div className="w-40 shrink-0 min-w-0">
           <div className="font-medium text-gray-900 text-sm truncate">{leg.destination}</div>
           <div className="text-xs text-gray-400 mt-0.5">{fmtDateRange(startDate, leg.duration_days)}</div>
-          {leg.notes && <div className="text-xs text-gray-400 mt-1 line-clamp-1">{leg.notes}</div>}
           {isTransit && leg.transit?.from_airport && leg.transit?.to_airport && (
             <div className="text-xs text-gray-400 mt-0.5">
               {leg.transit.from_airport} → {leg.transit.to_airport}
               {leg.transit.airline && ` · ${leg.transit.airline}`}
-              {leg.transit.fare_type && leg.transit.fare_type !== 'Full fare' && <span className="ml-1 text-amber-600 font-medium"> {leg.transit.fare_type}</span>}
+              <div>{leg.transit.fare_type && leg.transit.fare_type !== 'Full fare' && <span className="text-amber-600 font-medium"> {leg.transit.fare_type}</span>}</div>
             </div>
           )}
         </div>
 
         {/* Activities — middle column */}
         <div className="flex-1 min-w-0 self-center">
+	{leg.notes && (
+
+    <div className="text-xs text-gray-400 mb-1 line-clamp-1">
+
+      {leg.notes}
+
+    </div>
+
+  )}
           {sorted.length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {sorted.slice(0, 6).map(a => {
@@ -533,14 +543,14 @@ function LegRow({ leg, startDate, expanded, saving, onSave, onToggle, onDelete, 
         <div className="shrink-0 text-right space-y-0.5">
           <div className="text-sm font-medium text-gray-700">{leg.duration_days}d</div>
           {/* Transit cost */}
-          {leg.mode === 'Transit' && leg.transit?.cost_aud && Number(leg.transit.cost_aud) > 0 && (
+          {isTransit && leg.transit?.cost_aud && Number(leg.transit.cost_aud) > 0 && (
             <div className="text-xs text-gray-400 flex items-center justify-end gap-0.5">
               <span className="material-symbols-rounded text-gray-300" style={{ fontSize: 11 }}>flight</span>
               {fmtAud(Number(leg.transit.cost_aud))}
             </div>
           )}
           {/* Accommodation cost for this leg */}
-          {leg.mode !== 'Transit' && (() => {
+          {leg.mode !== 'Transit' && leg.mode !== 'Flight' && (() => {
             const accomTotal = leg.accom.reduce(
               (s, a) => s + (Number(a.cost_per_night_aud) || 0) * leg.duration_days, 0
             )
@@ -552,7 +562,7 @@ function LegRow({ leg, startDate, expanded, saving, onSave, onToggle, onDelete, 
             ) : null
           })()}
           {/* Living cost for this leg */}
-          {leg.mode !== 'Transit' && (() => {
+          {leg.mode !== 'Transit' && leg.mode !== 'Flight' && (() => {
             const livingTotal = (Number(leg.daily_budget_aud) || 0) * leg.duration_days
             return livingTotal > 0 ? (
               <div className="text-xs text-gray-400 flex items-center justify-end gap-0.5">
@@ -580,9 +590,9 @@ function LegRow({ leg, startDate, expanded, saving, onSave, onToggle, onDelete, 
               <div className="text-xs text-gray-400 mb-1">Mode</div>
               <select value={draft.mode} onChange={e => {
                 const mode = e.target.value as ItineraryMode
-                setDraft(d => ({ ...d, mode, transit: mode === 'Transit' ? (d.transit ?? { id: uid(), ...emptyTransit }) : d.transit }))
+                setDraft(d => ({ ...d, mode, transit: mode === 'Transit' || mode === 'Flight' ? (d.transit ?? { id: uid(), ...emptyTransit }) : d.transit }))
               }} className="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-200">
-                {(['Transit','Experience','Maximise','Reset'] as ItineraryMode[]).map(m => <option key={m}>{m}</option>)}
+                {(['Flight','Transit','Tour','Experience','Maximise','Reset'] as ItineraryMode[]).map(m => <option key={m}>{m}</option>)}
               </select>
             </div>
             <div>
@@ -617,7 +627,7 @@ function LegRow({ leg, startDate, expanded, saving, onSave, onToggle, onDelete, 
               className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-200 resize-none" />
           </div>
 
-          {draft.mode === 'Transit' && (
+          {isTransit && (
             <TransitPanel detail={draft.transit ?? { id: '', ...emptyTransit }} onChange={transit => setDraft(d => ({ ...d, transit }))} />
           )}
 
@@ -643,7 +653,7 @@ function LegRow({ leg, startDate, expanded, saving, onSave, onToggle, onDelete, 
 // ── Stats bars ────────────────────────────────────────────────────────────────
 
 function StatsRow({ legs }: { legs: ItineraryLeg[] }) {
-  const dests   = legs.filter(l => l.mode !== 'Transit').length
+  const dests   = legs.filter(l => l.mode !== 'Transit' && l.mode !== 'Flight').length
   const regions = new Set(legs.map(l => l.region)).size
   const totalDays = legs.reduce((s, l) => s + l.duration_days, 0)
   const budget  = computeBudget(legs)
@@ -754,6 +764,7 @@ function DateSpine({ date, prevDate }: { date: Date; prevDate: Date | null }) {
     <div className="flex flex-col items-center w-9 shrink-0 pt-3 select-none">
       {showMonth && <span className="text-xs font-semibold text-gray-400 uppercase leading-none mb-1">{date.toLocaleDateString('en-AU', { month: 'short' })}</span>}
       <span className="text-sm font-semibold text-gray-300 leading-none">{date.getDate()}</span>
+      <span className="text-sm font-semibold text-gray-300 leading-none">{date.toLocaleDateString('en-AU', { weekday: 'short' })}</span>
       <div className="flex-1 w-px bg-gray-100 mt-2 min-h-4" />
     </div>
   )

@@ -106,7 +106,7 @@ export async function saveLeg(leg: ItineraryLeg): Promise<void> {
     .eq('id', leg.id)
   if (legErr) throw legErr
 
-  if (leg.mode === 'Transit' && leg.transit) {
+  if (leg.mode === 'Transit' || leg.mode === 'Flight' && leg.transit) {
     const { error } = await supabase.from('itinerary_transit_details').upsert({
       leg_id: leg.id,
       from_airport: leg.transit.from_airport, to_airport: leg.transit.to_airport,
@@ -116,7 +116,7 @@ export async function saveLeg(leg: ItineraryLeg): Promise<void> {
       booking_notes: leg.transit.booking_notes || null,
     }, { onConflict: 'leg_id' })
     if (error) throw error
-  } else if (leg.mode !== 'Transit') {
+  } else if (leg.mode !== 'Transit' || leg.mode === 'Flight') {
     await supabase.from('itinerary_transit_details').delete().eq('leg_id', leg.id)
   }
 

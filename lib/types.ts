@@ -89,7 +89,7 @@ export interface Profile {
 // Itinerary types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ItineraryMode  = 'Transit' | 'Experience' | 'Maximise' | 'Reset'
+export type ItineraryMode  = 'Flight' | 'Transit' | 'Tour' | 'Experience' | 'Maximise' | 'Reset'
 export type FareType       = 'Full fare' | 'ID90' | 'ZED' | 'Staff standby'
 export type ActivityTier   = 'must' | 'nice' | 'optional'
 export type AccomType      = 'Boutique' | 'Budget' | 'Apartment' | 'Camping' | 'Hostel' | 'Resort' | 'TBD'
@@ -311,7 +311,7 @@ export function computeBudget(legs: ItineraryLeg[]): BudgetSummary {
     const days = leg.duration_days
     totalDays += days
 
-    if (leg.mode === 'Transit' && leg.transit?.cost_aud) {
+    if ((leg.mode === 'Transit' || leg.mode === 'Flight') && leg.transit?.cost_aud) {
       transitTotal += Number(leg.transit.cost_aud) || 0
     }
 
