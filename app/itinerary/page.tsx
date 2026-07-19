@@ -471,6 +471,7 @@ function LegRow({ leg, startDate, expanded, saving, onSave, onToggle, onDelete, 
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1, zIndex: isDragging ? 50 : undefined }
 
   const [draft, setDraft] = useState<ItineraryLeg>(leg)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   useEffect(() => { if (!expanded) setDraft(leg) }, [leg.id, expanded])
 
   const isTransit = draft.mode === 'Transit' || draft.mode === 'Flight'
@@ -637,9 +638,21 @@ function LegRow({ leg, startDate, expanded, saving, onSave, onToggle, onDelete, 
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            <button onClick={onDelete} className="text-xs text-gray-400 hover:text-rose-500 flex items-center gap-1">
-              <Icon name="delete" className="!text-sm" /> Remove leg
-            </button>
+            {!confirmingDelete ? (
+              <button onClick={() => setConfirmingDelete(true)} className="text-xs text-gray-400 hover:text-rose-500 flex items-center gap-1">
+                <Icon name="delete" className="!text-sm" /> Remove leg
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-600 font-medium">Remove this leg?</span>
+                <button onClick={onDelete} className="text-xs text-rose-500 font-medium hover:text-rose-600">
+                  Yes, remove
+                </button>
+                <button onClick={() => setConfirmingDelete(false)} className="text-xs text-gray-400 hover:text-gray-600">
+                  Cancel
+                </button>
+              </div>
+            )}
             <button onClick={handleSave} className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 text-white rounded-xl text-xs font-medium hover:bg-sky-700">
               <Icon name="check" className="!text-sm text-white" /> Save & close
             </button>
