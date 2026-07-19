@@ -59,9 +59,9 @@ const MODE_STYLES: Record<ItineraryMode, { bg: string; text: string; icon: strin
 }
 
 const TIER_STYLES: Record<ActivityTier, { bg: string; text: string; dot: string }> = {
-  must:     { bg: 'bg-sky-50',    text: 'text-sky-700',    dot: 'bg-sky-400' },
-  nice:     { bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-400' },
-  optional: { bg: 'bg-gray-100',  text: 'text-gray-500',   dot: 'bg-gray-300' },
+  must:     { bg: 'bg-green-50',    text: 'text-green-700',    dot: 'bg-green-400' },
+  nice:     { bg: 'bg-sky-50', text: 'text-sky-700', dot: 'bg-sky-400' },
+  optional: { bg: 'bg-yellow-100',  text: 'text-yellow-500',   dot: 'bg-yellow-300' },
 }
 
 const TIER_ORDER: Record<ActivityTier, number> = { must: 0, nice: 1, optional: 2 }
