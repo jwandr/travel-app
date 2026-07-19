@@ -517,7 +517,7 @@ function LegRow({ leg, startDate, expanded, saving, onSave, onToggle, onDelete, 
         <div className="flex-1 min-w-0 self-center">
 	{leg.notes && (
 
-    <div className="text-xs text-gray-400 mb-1 line-clamp-1">
+    <div className="text-xs text-gray-400 mb-1">
 
       {leg.notes}
 
