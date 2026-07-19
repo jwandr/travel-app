@@ -432,6 +432,7 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
   const [imageUrl, setImageUrl] = useState(item.image_url ?? '')
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cfg = TYPE_CONFIG[item.type] ?? TYPE_CONFIG['activity']
 
@@ -493,6 +494,7 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
       onClose()
     } catch {
       setDeleting(false)
+      setConfirmingDelete(false)
     }
   }
 
@@ -679,11 +681,25 @@ function DetailPanel({ item, onClose, onChange, onDelete, onCascade }: {
       </div>
 
       <div className="px-5 py-4 border-t border-gray-100 shrink-0">
-        <button onClick={handleDelete} disabled={deleting}
-          className="flex items-center gap-2 text-sm text-red-500 hover:text-red-700 transition-colors disabled:opacity-50">
-          <Icon name="delete" className="text-red-400" />
-          {deleting ? 'Deleting…' : 'Delete item'}
-        </button>
+        {!confirmingDelete ? (
+          <button onClick={() => setConfirmingDelete(true)}
+            className="flex items-center gap-2 text-sm text-red-500 hover:text-red-700 transition-colors">
+            <Icon name="delete" className="text-red-400" />
+            Delete item
+          </button>
+        ) : (
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-700 font-medium">Delete this item?</span>
+            <button onClick={handleDelete} disabled={deleting}
+              className="text-sm text-red-500 font-medium hover:text-red-700 disabled:opacity-50">
+              {deleting ? 'Deleting…' : 'Yes, delete'}
+            </button>
+            <button onClick={() => setConfirmingDelete(false)}
+              className="text-sm text-gray-400 hover:text-gray-600">
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
     </>
   )
