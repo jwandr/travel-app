@@ -17,6 +17,7 @@ import {
   getPendingItineraryInvites, inviteToItinerary, removeItineraryInvite,
 } from '@/lib/itinerary'
 import { computeBudget } from '@/lib/types'
+import { buildItineraryExport } from '@/lib/itinerary-export'
 import type {
   Itinerary, ItineraryLeg, TransitDetail, Activity, AccomNote,
   ItineraryMode, FareType, ActivityTier, AccomType, BookingStatus,
@@ -797,6 +798,7 @@ export default function ItineraryPage() {
   const [showItinModal, setShowItinModal]   = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string } | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -947,6 +949,13 @@ export default function ItineraryPage() {
 
   const handleDeleteActivity = async (id: string) => { try { await dbDeleteActivity(id) } catch {} }
   const handleDeleteAccom    = async (id: string) => { try { await dbDeleteAccomNote(id) } catch {} }
+  const handleExport = async () => {
+    if (!itinerary) return
+    const text = buildItineraryExport(itinerary, legs)
+    await navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
 
   // ── Derived ───────────────────────────────────────────────────────────────
 
@@ -1014,6 +1023,18 @@ export default function ItineraryPage() {
               </button>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              {/* Export button */}
+              <button
+                onClick={handleExport}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors border ${
+                  copied
+                    ? 'bg-green-50 text-green-600 border-green-200'
+                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <Icon name={copied ? 'check' : 'content_copy'} className="!text-base" />
+                <span className="hidden sm:inline">{copied ? 'Copied!' : 'Export'}</span>
+              </button>
               {/* Share button */}
               <button
                 onClick={() => setShowShareModal(true)}
