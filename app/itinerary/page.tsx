@@ -745,20 +745,29 @@ function LegTimeline({ legs, startDate }: { legs: ItineraryLeg[]; startDate: str
   const start = new Date(startDate + 'T00:00:00')
   const totalDays = legs.reduce((s, l) => s + l.duration_days, 0)
   const end = addDays(start, Math.max(totalDays - 1, 0))
+  const rangeMs = end.getTime() - start.getTime() || 1 // avoid divide-by-zero on 1-day trips
 
-  // Every month spanned by the trip, in order
-  const months: { year: number; month: number }[] = []
+  // % position of a date within the full trip range
+  const pct = (d: Date) => ((d.getTime() - start.getTime()) / rangeMs) * 100
+
+  // Every month spanned by the trip, in order, with its visible day-range clipped to the trip
+  const months: { year: number; month: number; left: number; width: number }[] = []
   let cursor = new Date(start.getFullYear(), start.getMonth(), 1)
   const lastMonth = new Date(end.getFullYear(), end.getMonth(), 1)
   while (cursor <= lastMonth) {
-    months.push({ year: cursor.getFullYear(), month: cursor.getMonth() })
+    const monthStart = new Date(cursor.getFullYear(), cursor.getMonth(), 1)
+    const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0)
+    const visStart = monthStart < start ? start : monthStart
+    const visEnd = monthEnd > end ? end : monthEnd
+    const left = pct(visStart)
+    const width = Math.max(pct(addDays(visEnd, 1)) - left, 0)
+    months.push({ year: cursor.getFullYear(), month: cursor.getMonth(), left, width })
     cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
   }
 
   const startDates = computeStartDates(legs, startDate)
-  const totalWidth = months.length * TIMELINE_COL_WIDTH
 
-  // Group consecutive legs by region (same approach as the page's RegionHeader grouping)
+  // Group consecutive legs by region
   type RegionGroup = { region: string; legs: ItineraryLeg[] }
   const groups: RegionGroup[] = []
   for (const leg of legs) {
@@ -767,7 +776,6 @@ function LegTimeline({ legs, startDate }: { legs: ItineraryLeg[]; startDate: str
     else groups.push({ region: leg.region, legs: [leg] })
   }
 
-  // Assign a stable color per distinct region, by order of first appearance
   const colorByRegion = new Map<string, string>()
   groups.forEach((g) => {
     if (!colorByRegion.has(g.region)) {
@@ -782,61 +790,58 @@ function LegTimeline({ legs, startDate }: { legs: ItineraryLeg[]; startDate: str
         <div className="text-xs text-gray-300">{fmtDate(start)} – {fmtDate(end)}</div>
       </div>
 
-      <div className="overflow-x-auto">
-        <div style={{ width: totalWidth, minWidth: '100%' }}>
-          {/* Month header row */}
-          <div className="flex border-b border-gray-100 pb-1.5">
-            {months.map((m) => (
-              <div key={`${m.year}-${m.month}`} style={{ width: TIMELINE_COL_WIDTH }} className="shrink-0 text-center">
-                <div className="text-xs font-semibold text-gray-400 uppercase">
-                  {new Date(m.year, m.month, 1).toLocaleDateString('en-AU', { month: 'short' })}
-                </div>
-                {m.month === 0 && <div className="text-[10px] text-gray-300">{m.year}</div>}
-              </div>
-            ))}
+      {/* Month header row — proportional widths, no scroll */}
+      <div className="relative border-b border-gray-100 pb-1.5" style={{ height: 28 }}>
+        {months.map((m) => (
+          <div
+            key={`${m.year}-${m.month}`}
+            className="absolute top-0 text-center overflow-hidden"
+            style={{ left: `${m.left}%`, width: `${m.width}%` }}
+          >
+            <div className="text-xs font-semibold text-gray-400 uppercase truncate">
+              {new Date(m.year, m.month, 1).toLocaleDateString('en-AU', { month: 'short' })}
+            </div>
+            {m.month === 0 && <div className="text-[10px] text-gray-300">{m.year}</div>}
           </div>
-
-          {/* Region bars */}
-          <div className="relative mt-2" style={{ height: 28 }}>
-            {groups.map((group, i) => {
-              const groupStart = startDates.get(group.legs[0].id)!
-              const lastLeg = group.legs[group.legs.length - 1]
-              const groupEnd = addDays(startDates.get(lastLeg.id)!, lastLeg.duration_days)
-              const left = monthPosition(groupStart, months) * TIMELINE_COL_WIDTH
-              const width = Math.max(
-                (monthPosition(groupEnd, months) - monthPosition(groupStart, months)) * TIMELINE_COL_WIDTH,
-                6
-              )
-              return (
-                <div
-                  key={`${group.region}-${i}`}
-                  className={`absolute top-0 h-6 rounded-full ${colorByRegion.get(group.region)} flex items-center px-2 overflow-hidden shadow-sm`}
-                  style={{ left, width }}
-                  title={`${group.region} · ${fmtDateRange(groupStart, group.legs.reduce((s, l) => s + l.duration_days, 0))}`}
-                >
-                  <span className="text-[10px] font-semibold text-white truncate">{group.region}</span>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Date markers */}
-          <div className="relative mt-2" style={{ height: 28 }}>
-            {groups.map((group, i) => {
-              const groupStart = startDates.get(group.legs[0].id)!
-              const left = monthPosition(groupStart, months) * TIMELINE_COL_WIDTH
-              return (
-                <div key={`${group.region}-${i}-marker`} className="absolute top-0" style={{ left }}>
-                  <div className={`w-1.5 h-1.5 rounded-full ${colorByRegion.get(group.region)} mb-1`} />
-                  <div className="text-[10px] text-gray-400 whitespace-nowrap">{fmtDate(groupStart)}</div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Legend — one entry per distinct region */}
+      {/* Region bars */}
+      <div className="relative mt-2" style={{ height: 28 }}>
+        {groups.map((group, i) => {
+          const groupStart = startDates.get(group.legs[0].id)!
+          const lastLeg = group.legs[group.legs.length - 1]
+          const groupEnd = addDays(startDates.get(lastLeg.id)!, lastLeg.duration_days)
+          const left = pct(groupStart)
+          const width = Math.max(pct(groupEnd) - left, 1.2)
+          return (
+            <div
+              key={`${group.region}-${i}`}
+              className={`absolute top-0 h-6 rounded-full ${colorByRegion.get(group.region)} flex items-center px-2 overflow-hidden shadow-sm`}
+              style={{ left: `${left}%`, width: `${width}%` }}
+              title={`${group.region} · ${fmtDateRange(groupStart, group.legs.reduce((s, l) => s + l.duration_days, 0))}`}
+            >
+              <span className="text-[10px] font-semibold text-white truncate">{group.region}</span>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Date markers */}
+      <div className="relative mt-2" style={{ height: 28 }}>
+        {groups.map((group, i) => {
+          const groupStart = startDates.get(group.legs[0].id)!
+          const left = pct(groupStart)
+          return (
+            <div key={`${group.region}-${i}-marker`} className="absolute top-0" style={{ left: `${left}%` }}>
+              <div className={`w-1.5 h-1.5 rounded-full ${colorByRegion.get(group.region)} mb-1`} />
+              <div className="text-[10px] text-gray-400 whitespace-nowrap">{fmtDate(groupStart)}</div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Legend */}
       <div className="flex items-center gap-4 flex-wrap pt-1 border-t border-gray-50">
         {Array.from(colorByRegion.entries()).map(([region, color]) => (
           <span key={region} className="flex items-center gap-1.5 text-xs text-gray-400">
