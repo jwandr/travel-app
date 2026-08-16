@@ -64,6 +64,8 @@ const MODE_BAR_COLOR: Record<ItineraryMode, string> = {
   Experience: 'bg-sky-500',
   Maximise:   'bg-purple-500',
   Reset:      'bg-green-500',
+  Flight:     'bg-slate-500',
+  Tour:       'bg-amber-500',
 }
 
 const TIER_STYLES: Record<ActivityTier, { bg: string; text: string; dot: string }> = {
