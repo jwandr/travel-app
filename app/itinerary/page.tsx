@@ -58,6 +58,14 @@ const MODE_STYLES: Record<ItineraryMode, { bg: string; text: string; icon: strin
   Reset:      { bg: 'bg-green-50',  text: 'text-green-700',  icon: 'stress_management' },
 }
 
+// Add right after MODE_STYLES in app/itinerary/page.tsx
+const MODE_BAR_COLOR: Record<ItineraryMode, string> = {
+  Transit:    'bg-gray-400',
+  Experience: 'bg-sky-500',
+  Maximise:   'bg-purple-500',
+  Reset:      'bg-green-500',
+}
+
 const TIER_STYLES: Record<ActivityTier, { bg: string; text: string; dot: string }> = {
   must:     { bg: 'bg-green-50',    text: 'text-green-700',    dot: 'bg-green-400' },
   nice:     { bg: 'bg-sky-50', text: 'text-sky-700', dot: 'bg-sky-400' },
@@ -707,6 +715,113 @@ function StatsRow({ legs }: { legs: ItineraryLeg[] }) {
   )
 }
 
+function daysInMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate()
+}
+
+// Fractional "month units" position — integer part is month index, decimal is day-of-month progress
+function monthPosition(date: Date, months: { year: number; month: number }[]): number {
+  const idx = months.findIndex(m => m.year === date.getFullYear() && m.month === date.getMonth())
+  const dim = daysInMonth(date.getFullYear(), date.getMonth())
+  if (idx >= 0) return idx + (date.getDate() - 1) / dim
+  // Clamp dates outside the computed range (shouldn't normally happen)
+  return date < new Date(months[0].year, months[0].month, 1) ? 0 : months.length
+}
+
+const TIMELINE_COL_WIDTH = 90 // px per month column
+
+function LegTimeline({ legs, startDate }: { legs: ItineraryLeg[]; startDate: string }) {
+  if (legs.length === 0) return null
+
+  const start = new Date(startDate + 'T00:00:00')
+  const totalDays = legs.reduce((s, l) => s + l.duration_days, 0)
+  const end = addDays(start, Math.max(totalDays - 1, 0))
+
+  // Every month spanned by the trip, in order
+  const months: { year: number; month: number }[] = []
+  let cursor = new Date(start.getFullYear(), start.getMonth(), 1)
+  const lastMonth = new Date(end.getFullYear(), end.getMonth(), 1)
+  while (cursor <= lastMonth) {
+    months.push({ year: cursor.getFullYear(), month: cursor.getMonth() })
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
+  }
+
+  const startDates = computeStartDates(legs, startDate)
+  const totalWidth = months.length * TIMELINE_COL_WIDTH
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-xl p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Trip Timeline</div>
+        <div className="text-xs text-gray-300">{fmtDate(start)} – {fmtDate(end)}</div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <div style={{ width: totalWidth, minWidth: '100%' }}>
+          {/* Month header row */}
+          <div className="flex border-b border-gray-100 pb-1.5">
+            {months.map((m) => (
+              <div key={`${m.year}-${m.month}`} style={{ width: TIMELINE_COL_WIDTH }} className="shrink-0 text-center">
+                <div className="text-xs font-semibold text-gray-400 uppercase">
+                  {new Date(m.year, m.month, 1).toLocaleDateString('en-AU', { month: 'short' })}
+                </div>
+                {m.month === 0 && <div className="text-[10px] text-gray-300">{m.year}</div>}
+              </div>
+            ))}
+          </div>
+
+          {/* Leg bars */}
+          <div className="relative mt-2" style={{ height: 28 }}>
+            {legs.map((leg) => {
+              const legStart = startDates.get(leg.id)!
+              const legEnd = addDays(legStart, leg.duration_days)
+              const left = monthPosition(legStart, months) * TIMELINE_COL_WIDTH
+              const width = Math.max(
+                (monthPosition(legEnd, months) - monthPosition(legStart, months)) * TIMELINE_COL_WIDTH,
+                6
+              )
+              return (
+                <div
+                  key={leg.id}
+                  className={`absolute top-0 h-6 rounded-full ${MODE_BAR_COLOR[leg.mode]} flex items-center px-2 overflow-hidden shadow-sm`}
+                  style={{ left, width }}
+                  title={`${leg.destination} · ${fmtDateRange(legStart, leg.duration_days)}`}
+                >
+                  <span className="text-[10px] font-semibold text-white truncate">{leg.destination}</span>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Date markers */}
+          <div className="relative mt-2" style={{ height: 28 }}>
+            {legs.map((leg) => {
+              const legStart = startDates.get(leg.id)!
+              const left = monthPosition(legStart, months) * TIMELINE_COL_WIDTH
+              return (
+                <div key={leg.id} className="absolute top-0" style={{ left }}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${MODE_BAR_COLOR[leg.mode]} mb-1`} />
+                  <div className="text-[10px] text-gray-400 whitespace-nowrap">{fmtDate(legStart)}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-4 flex-wrap pt-1 border-t border-gray-50">
+        {(['Transit', 'Experience', 'Maximise', 'Reset'] as ItineraryMode[]).map((m) => (
+          <span key={m} className="flex items-center gap-1.5 text-xs text-gray-400">
+            <span className={`w-2 h-2 rounded-full ${MODE_BAR_COLOR[m]}`} />
+            {m}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function RegionHeader({ label, legs, startDates }: {
   label: string
   legs: ItineraryLeg[]
@@ -1052,6 +1167,9 @@ export default function ItineraryPage() {
 
           {/* Two-row stats */}
           <StatsRow legs={legs} />
+
+          {/* Trip timeline */}
+          <LegTimeline legs={legs} startDate={itinerary?.start_date ?? '2026-01-16'} />
 
           {/* Region filter */}
           <div className="flex gap-2 flex-wrap">
