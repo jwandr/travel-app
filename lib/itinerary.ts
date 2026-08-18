@@ -102,6 +102,8 @@ export async function saveLeg(leg: ItineraryLeg): Promise<void> {
       duration_days: leg.duration_days,
       daily_budget_aud: leg.daily_budget_aud ? Number(leg.daily_budget_aud) : null,
       notes: leg.notes || null, sort_order: leg.sort_order,
+      location_lat: leg.location_lat ?? null,   // ← new
+      location_lng: leg.location_lng ?? null,   // ← new
     })
     .eq('id', leg.id)
   if (legErr) throw legErr

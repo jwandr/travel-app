@@ -119,6 +119,8 @@ export interface LegRow {
   duration_days: number
   daily_budget_aud: number | null
   notes: string | null
+  location_lat: number | null   // ← new
+  location_lng: number | null   // ← new
   created_at: string
   updated_at: string
 }
@@ -223,6 +225,8 @@ export interface ItineraryLeg {
   duration_days: number
   daily_budget_aud: string
   notes: string
+  location_lat?: number   // ← new
+  location_lng?: number   // ← new
   transit: TransitDetail | null
   activities: Activity[]
   accom: AccomNote[]
@@ -251,6 +255,8 @@ export function hydrateLeg(
     itinerary_id: row.itinerary_id,
     sort_order: row.sort_order,
     region: row.region,
+    location_lat: row.location_lat ?? undefined,
+    location_lng: row.location_lng ?? undefined, 
     mode: row.mode,
     destination: row.destination,
     duration_days: row.duration_days,

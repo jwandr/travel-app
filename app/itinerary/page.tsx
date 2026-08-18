@@ -24,6 +24,7 @@ import type {
   ItineraryRow, ItineraryMemberRow, ItineraryInviteRow, ItineraryRole,
   BudgetSummary,
 } from '@/lib/types'
+import { geocode } from '@/lib/geocode'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -46,6 +47,80 @@ function fmtAud(n: number) {
   return n === 0 ? '—' : `$${Math.round(n).toLocaleString('en-AU')}`
 }
 function uid() { return crypto.randomUUID() }
+function ItineraryMapLoader(props: { legs: ItineraryLeg[] }) {
+  const [Map, setMap] = useState<any>(null)
+  useEffect(() => { import('@/components/ItineraryMap').then((mod) => setMap(() => mod.default)) }, [])
+  if (!Map) return (
+    <div className="bg-white border border-gray-100 rounded-xl flex items-center justify-center text-gray-300 text-sm animate-pulse" style={{ height: 360 }}>
+      Loading map…
+    </div>
+  )
+  return <Map {...props} />
+}
+function LegLocationField({ destination, lat, lng, onLocate, onManualChange }: {
+  destination: string; lat?: number; lng?: number
+  onLocate: (lat: number, lng: number) => void
+  onManualChange: (lat?: number, lng?: number) => void
+}) {
+  const [geocoding, setGeocoding] = useState(false)
+  const [manualOpen, setManualOpen] = useState(false)
+  const [notFound, setNotFound] = useState(false)
+  const hasLocation = lat != null && lng != null
+
+  const handleLocate = async () => {
+    if (!destination.trim()) return
+    setGeocoding(true); setNotFound(false)
+    try {
+      const result = await geocode(destination.trim())
+      if (result) onLocate(result.lat, result.lng)
+      else setNotFound(true)
+    } finally { setGeocoding(false) }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <div className="text-xs text-gray-400">Map location</div>
+        {hasLocation && (
+          <span className="text-xs text-green-500 flex items-center gap-0.5">
+            <Icon name="check_circle" className="!text-sm" /> Located
+          </span>
+        )}
+      </div>
+      <div className="flex gap-2">
+        <button type="button" onClick={handleLocate} disabled={geocoding || !destination.trim()}
+          className="flex-1 flex items-center justify-center gap-1.5 text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+          <Icon name={geocoding ? 'refresh' : 'my_location'} className={`!text-base ${geocoding ? 'animate-spin' : ''}`} />
+          {geocoding ? 'Locating…' : hasLocation ? `Re-locate "${destination}"` : `Locate "${destination}"`}
+        </button>
+        <button type="button" onClick={() => setManualOpen(o => !o)} className="text-xs text-gray-400 hover:text-sky-600 px-2">
+          {manualOpen ? 'Hide' : 'Manual'}
+        </button>
+      </div>
+      {notFound && (
+        <p className="text-xs text-amber-500 mt-1">
+          Couldn't find that place — try adjusting the destination text, or set coordinates manually.
+        </p>
+      )}
+      {manualOpen && (
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <div>
+            <div className="text-xs text-gray-400 mb-1">Latitude</div>
+            <input type="number" step="any" value={lat ?? ''}
+              onChange={e => onManualChange(e.target.value === '' ? undefined : Number(e.target.value), lng)}
+              className="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-200" />
+          </div>
+          <div>
+            <div className="text-xs text-gray-400 mb-1">Longitude</div>
+            <input type="number" step="any" value={lng ?? ''}
+              onChange={e => onManualChange(lat, e.target.value === '' ? undefined : Number(e.target.value))}
+              className="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-200" />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -625,6 +700,14 @@ function LegRow({ leg, startDate, expanded, saving, onSave, onToggle, onDelete, 
             </div>
           </div>
 
+          <LegLocationField
+            destination={draft.destination}
+            lat={draft.location_lat}
+            lng={draft.location_lng}
+            onLocate={(lat, lng) => setDraft(d => ({ ...d, location_lat: lat, location_lng: lng }))}
+            onManualChange={(lat, lng) => setDraft(d => ({ ...d, location_lat: lat, location_lng: lng }))}
+          />
+
           {/* Daily budget */}
           <CostInput
             label="Daily living budget (AUD/day) — food, local transport, incidentals"
@@ -1202,6 +1285,8 @@ export default function ItineraryPage() {
 
           {/* Trip timeline */}
           <LegTimeline legs={legs} startDate={itinerary?.start_date ?? '2026-01-16'} />
+          <ItineraryMapLoader legs={legs} />
+          {/* Region filter */}
 
           {/* Region filter */}
           <div className="flex gap-2 flex-wrap">
