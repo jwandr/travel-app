@@ -1285,8 +1285,6 @@ export default function ItineraryPage() {
 
           {/* Trip timeline */}
           <LegTimeline legs={legs} startDate={itinerary?.start_date ?? '2026-01-16'} />
-          <ItineraryMapLoader legs={legs} />
-          {/* Region filter */}
 
           {/* Region filter */}
           <div className="flex gap-2 flex-wrap">
@@ -1347,6 +1345,8 @@ export default function ItineraryPage() {
           <p className="text-xs text-gray-400 text-center pb-4">
             Drag to reorder · Edit to modify · Save to confirm · Dates and budget totals cascade automatically
           </p>
+
+          <ItineraryMapLoader legs={legs} />
         </div>
 
         {/* Modals */}
