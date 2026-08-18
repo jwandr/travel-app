@@ -113,7 +113,7 @@ export default function ItineraryMap({ legs }: { legs: ItineraryLeg[] }) {
           <div className="text-xs text-gray-300">{missing} leg{missing !== 1 ? 's' : ''} missing a location</div>
         )}
       </div>
-      <div className="relative" style={{ height: 360 }}>
+      <div className="relative" style={{ height: 560 }}>
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
         <div ref={containerRef} className="h-full w-full" />
         <div className="absolute bottom-3 left-3 bg-white rounded-xl shadow-lg p-2.5 space-y-1 z-[1000] max-w-[160px]">
